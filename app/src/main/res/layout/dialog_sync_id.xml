@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dialog_title_height"
+        android:background="@color/colorPrimary">
+        <ImageView
+            android:layout_width="@dimen/dialog_icon_size"
+            android:layout_height="@dimen/dialog_icon_size"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_sync"/>
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/dialog_margin_left_title"
+        android:layout_marginTop="@dimen/dialog_margin_top_title"
+        android:layout_marginRight="@dimen/dialog_margin_right_title"
+        android:text="Pengaturan Sync dan IP Server"
+        android:textColor="#000000"
+        android:textSize="@dimen/dialog_font_title"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Atur IP Server"/>
+
+        <EditText
+            android:id="@+id/edt_ip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="contoh: 192.168.100.13"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Atur interval (dalam menit) untuk sinkronisasi data ke Server"/>
+
+        <EditText
+            android:id="@+id/edt_sync"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="contoh: 30"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginRight="24dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginLeft="24dp">
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_sync_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            app:nb_text="Simpan"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorAccent"/>
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_sync_start"
+            android:layout_toLeftOf="@id/btn_sync_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:nb_text="Sinkronkan Sekarang"
+            app:nb_textStyle="bold"
+            android:layout_marginRight="16dp"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorAccent"/>
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_sync_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            app:nb_text="Batal"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorRed"/>
+    </RelativeLayout>
+
+</LinearLayout>

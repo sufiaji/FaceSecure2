@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/transparent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/layout1"
+        android:layout_width="match_parent"
+        android:background="@android:color/transparent"
+        android:layout_marginTop="320dp"
+        android:layout_height="100dp"/>
+
+    <RelativeLayout
+        android:id="@+id/layout2"
+        android:layout_below="@id/layout1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        android:background="@drawable/layout_bottom_2"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_greet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="32sp"
+            android:layout_marginTop="32dp"
+            android:textStyle="bold|italic"
+            android:textColor="#000000"
+            android:text="Selamat Datang" />
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_below="@id/tv_greet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:text="Pradhono Aji" />
+        <TextView
+            android:id="@+id/tv_nik"
+            android:layout_below="@id/tv_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:text="00178654" />
+
+        <LinearLayout
+            android:layout_below="@id/tv_nik"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="5"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="4"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Senin, 28 Januari 2020"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tv_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="08:35 WIB"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+            <RelativeLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_height="match_parent">
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_offline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="4dp"
+                    android:layout_alignParentBottom="true"
+                    android:text="Offline"
+                    android:textSize="12sp"
+                    android:textColor="#000"
+                    app:cit_drawableLeft="@drawable/ic_circle_red"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_online"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:drawablePadding="4dp"
+                    android:visibility="invisible"
+                    android:text="Online"
+                    android:textColor="#000"
+                    android:textSize="12sp"
+                    app:cit_drawableLeft="@drawable/ic_circle_green"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+    <com.jackandphantom.circularimageview.CircleImage
+        android:id="@+id/iv_thumb"
+        android:layout_width="118dp"
+        android:layout_height="118dp"
+        android:src="@drawable/aji_thumb1"
+        android:scaleType="centerInside"
+        android:layout_marginTop="352dp"
+        android:layout_centerHorizontal="true"/>
+
+</RelativeLayout>

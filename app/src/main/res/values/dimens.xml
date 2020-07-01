@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="dialog_font_title">16sp</dimen>
+    <dimen name="dialog_margin_left_title">24dp</dimen>
+    <dimen name="dialog_margin_right_title">24dp</dimen>
+    <dimen name="dialog_margin_top_title">8dp</dimen>
+    <dimen name="dialog_font_content">14sp</dimen>
+    <dimen name="dialog_title_height">52dp</dimen>
+    <dimen name="dialog_icon_size">24dp</dimen>
+</resources>

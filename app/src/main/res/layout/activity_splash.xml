@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/splash_background3">
+    
+
+    <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="96dp"
+        android:layout_marginRight="32dp"
+        android:gravity="right"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Alpharai"
+            android:gravity="right"
+            android:textColor="#ffff"
+            android:textSize="41sp"
+            android:fontFamily="@font/productsansregular"
+            android:foregroundGravity="right"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Facial Biometric for Time Attendance"
+            android:gravity="right"
+            android:textColor="#ffff"
+            android:textSize="21sp"
+            android:fontFamily="@font/productsansregular"
+            android:foregroundGravity="right"
+            />
+    </LinearLayout>
+</RelativeLayout>

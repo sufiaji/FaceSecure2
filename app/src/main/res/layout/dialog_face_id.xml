@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dialog_title_height"
+        android:background="@color/colorPrimary">
+        <ImageView
+            android:layout_width="@dimen/dialog_icon_size"
+            android:layout_height="@dimen/dialog_icon_size"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_face"/>
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="8dp"
+        android:text="Pengaturan Deteksi Wajah"
+        android:textColor="#000000"
+        android:textSize="@dimen/dialog_font_title"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Waktu tunggu deteksi wajah (dalam detik). Proses absensi hanya akan dimulai jika wajah berada di depan kamera selama lebih dari waktu tunggu berikut:"/>
+
+        <EditText
+            android:id="@+id/edt_timeout_face"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="contoh: 5"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Matikan layar setelah sekian detik:"/>
+
+        <EditText
+            android:id="@+id/edt_standby_timeout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:hint="contoh: 30"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical">
+        <CheckBox
+            android:id="@+id/ck_bb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Kotak di sekitar wajah"/>
+        <CheckBox
+            android:id="@+id/ck_liveness"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Jgn proses jika Liveness Detection tdk tersedia"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="12dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:text="Jarak deteksi wajah:"
+            android:layout_marginRight="4dp"
+            android:textSize="@dimen/dialog_font_content" />
+
+        <org.angmarch.views.NiceSpinner
+            android:id="@+id/spinner_distance_face"
+            android:layout_width="wrap_content"
+            android:textSize="14sp"
+            android:layout_gravity="center_vertical"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginRight="24dp"
+        android:layout_marginBottom="24dp"
+        android:layout_marginLeft="24dp">
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_face_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            app:nb_text="Simpan"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorAccent"/>
+
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_face_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            app:nb_text="Batal"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorRed"/>
+    </RelativeLayout>
+
+
+</LinearLayout>

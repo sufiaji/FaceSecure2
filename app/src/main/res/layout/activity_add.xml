@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:id="@+id/preview_display_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        android:layout_marginTop="0dp"
+        android:layout_weight="1">
+    </FrameLayout>
+
+<!--    <com.github.ybq.android.spinkit.SpinKitView-->
+<!--        xmlns:app="http://schemas.android.com/apk/res-auto"-->
+<!--        android:id="@+id/progress_bar_add"-->
+<!--        style="@style/SpinKitView.Large.FadingCircle"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_gravity="center"-->
+<!--        android:layout_alignParentTop="true"-->
+<!--        android:layout_centerHorizontal="true"-->
+<!--        android:layout_margin="32dp"-->
+<!--        app:SpinKit_Color="#FFFFFF" />-->
+
+    <com.ornach.nobobutton.NoboButton
+        android:id="@+id/btn_capture"
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        app:nb_radius="32dp"
+        app:nb_borderColor="#fff"
+        app:nb_borderWidth="8dp"
+        app:nb_backgroundColor="#f00"
+        android:onClick="onCaptureClick"
+        android:layout_marginBottom="12dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        app:nb_focusColor="@color/colorRed"/>
+
+    <com.ornach.nobobutton.NoboButton
+        android:layout_marginLeft="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:nb_borderColor="#FFFFFF"
+        app:nb_borderWidth="2dp"
+        app:nb_backgroundColor="#00ffffff"
+        app:nb_focusColor="#B83CC3"
+        app:nb_radius="25dp"
+        android:layout_alignParentBottom="true"
+        android:layout_toRightOf="@id/btn_capture"
+        app:nb_drawableResource="@drawable/ic_close"
+        android:onClick="onCancelClick"
+        android:layout_marginBottom="32dp" />
+
+    <com.jackandphantom.circularimageview.CircleImage
+        android:layout_width="164dp"
+        android:layout_height="164dp"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="32dp"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/face_preview"/>
+
+    <ProgressBar
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/progress_bar_add"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="center"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_margin="32dp" />
+
+    <LinearLayout
+        android:id="@+id/layout_facingtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:orientation="vertical">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="20dp"
+            android:text="Stabilizing image..."
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Face found."
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Extracting keypoints: eye, nose, mouth... Done"
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Calculating angle between eyes... Done"
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText5"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Angle accepted"
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Capturing face... Face captured"
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText7"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Create Face Encoding Vector..."
+            android:textSize="11dp" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/facingText8"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:shadowColor="#333333"
+            android:shadowDx="1"
+            android:shadowDy="1"
+            android:shadowRadius="3"
+            android:singleLine="true"
+            android:textColor="#FFFFFF"
+            android:layout_marginLeft="12dp"
+            android:layout_marginTop="6dp"
+            android:text="Create Face Encoding Vector..."
+            android:textSize="11dp" />
+
+    </LinearLayout>
+
+</RelativeLayout>

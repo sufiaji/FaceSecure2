@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:layout_goneMarginBottom="18dp"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dialog_title_height"
+        android:background="@color/colorPrimary">
+        <ImageView
+            android:layout_width="@dimen/dialog_icon_size"
+            android:layout_height="@dimen/dialog_icon_size"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_speak"/>
+    </RelativeLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="@dimen/dialog_font_title"
+        android:layout_marginLeft="@dimen/dialog_margin_left_title"
+        android:layout_marginTop="@dimen/dialog_margin_top_title"
+        android:layout_marginRight="@dimen/dialog_margin_right_title"
+        android:textColor="#000000"
+        android:text="Pengaturan Perintah Suara dan Mode Auto"/>
+
+    <CheckBox
+        android:layout_marginTop="18dp"
+        android:id="@+id/ck_auto"
+        android:layout_marginLeft="36dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:checked="true"
+        android:text="Mode auto aktif"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Set timeout absensi untuk orang yang sama (HH:MM). Selama masih dalam interval waktu yg diset dibawah ini, orang yang sama tidak dapat melakukan absensi"/>
+
+        <com.vicmikhailau.maskededittext.MaskedEditText
+            android:id="@+id/edt_timeout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:mask="##:##"
+            android:hint="contoh: 08:00"/>
+
+    </LinearLayout>
+
+    <CheckBox
+        android:enabled="true"
+        android:layout_marginTop="12dp"
+        android:id="@+id/ck_feedback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:text="Aktifkan Feedback Suara"/>
+
+    <CheckBox
+        android:enabled="false"
+        android:id="@+id/ck_command"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:text="Aktifkan Perintah Suara"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/dialog_font_content"
+            android:text="Waktu tunggu perintah suara (dalam detik)"/>
+
+        <EditText
+            android:id="@+id/edt_waiting_voice"
+            android:inputType="number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="contoh: 10"/>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="24dp">
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_voice_save"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            app:nb_text="Simpan"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorAccent"/>
+
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_voice_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            app:nb_text="Batal"
+            app:nb_textStyle="bold"
+            app:nb_backgroundColor="#00ffffff"
+            app:nb_textColor="@color/colorRed"/>
+    </RelativeLayout>
+
+</LinearLayout>

@@ -190,8 +190,11 @@
         app:SpinKit_Color="@android:color/holo_red_light" />
     
     <ImageView
-        android:layout_width="240dp"
-        android:layout_height="240dp"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_centerHorizontal="true"
+        android:scaleType="centerInside"
+
         android:id="@+id/image_anim"/>
 
     <LinearLayout
@@ -203,21 +206,5 @@
         android:visibility="gone"
         android:background="#000000"/>
 
-    <!--
-    <RelativeLayout
-        android:id="@+id/container_layout"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:background="#00FFFFFF">
-
-        <com.airbnb.lottie.LottieAnimationView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:lottie_fileName="scan2.json"
-            app:lottie_loop="true"
-            app:lottie_autoPlay="true"/>
-    </RelativeLayout>
-    -->
 
 </RelativeLayout>

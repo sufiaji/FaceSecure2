@@ -481,8 +481,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             if(mDetectionVector!=null) mDetectionVector.clear();
                             stopFDTimer();
                             clearBB();
+//                            startAnim = false;
+                            hideScanAnim();
                             hideTextProgress();
-                            hideScanFrame();
+//                            hideScanFrame();
                             resetLivenessVariables();
                             startStandbyTimer();
                         }
@@ -515,6 +517,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mCameraHelper = null;
         mPreviewDisplayView = null;
         stopFDTimer();
+        hideScanAnim();
         stopSyncTimer();
         stopStandbyTimer();
         mPreviousStartStatus = mIsStart;
@@ -587,7 +590,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         imageScan = findViewById(R.id.image_anim);
         imageScan.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         imageScan.setImageDrawable(lottieDrawable);
-        LottieComposition.Factory.fromAssetFileName(this, "scan2.json", (composition) -> {
+        LottieComposition.Factory.fromAssetFileName(this, "scan4.json", (composition) -> {
             lottieDrawable.setComposition(composition);
             lottieDrawable.loop(true);
             lottieDrawable.playAnimation();
@@ -596,18 +599,19 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private boolean isShowScanner = false;
-    private void showScanAnim(int width, int height, int X, int Y) {
+    private boolean startAnim = false;
+    private void showScanAnim(int Y) {
         if(!isShowScanner) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     imageScan.setVisibility(View.VISIBLE);
                     imageScan.requestLayout();
-                    imageScan.getLayoutParams().height = height;
-                    imageScan.getLayoutParams().width = width;
-                    imageScan.setLeft(X);
-                    imageScan.setTop(Y);
-//                    isShowScanner = true;
+//                    imageScan.getLayoutParams().height = height;
+//                    imageScan.getLayoutParams().width = width;
+//                    imageScan.setLeft(X);
+                    imageScan.setY(Y);
+                    isShowScanner = true;
                 }
             });
 
@@ -615,6 +619,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void hideScanAnim() {
+        startAnim = false;
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -689,6 +694,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         } else {
 //                            showDebug("Liveness status on Timer: " + mFaceLivenessStatus);
                             mIsProcessing = true;
+                            startAnim = true;
                             if(mFaceLivenessStatus.equalsIgnoreCase(FACE_REAL)) {
                                 // if Liveness already finished and status is REAL, continue process attendnace
                                 showDebug("Liveness status on Timer REAL, begin process Attendance");
@@ -738,6 +744,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                                showDebug("Timer finish on liveness");
                                 mIsProcessing = true;
                                 mTimerFDAndLivenessIsFinished = true;
+                                startAnim = true;
                                 // check if face is real
                                 float realPortion = (float) mLivenessRealCounter / (float) mLivenessFrameCounter;
                                 if(realPortion >= THRESHOLD_REAL_NUM_FRAME_PERCENTAGE) {
@@ -940,7 +947,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 @Override
                 public void onEndOfSpeech() {
                     showDebug("onEndSpeech:");
-                    showDebug("Word: " + mWord);
+                    showDebug("CAPTURED WORDS: " + mWord);
                 }
 
                 @Override
@@ -958,7 +965,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         for(String word:matches) {
                             allMatches = word + ", ";
                         }
-                        showDebug(allMatches);
+                        mWord = allMatches;
+                        showDebug("CAPTURED WORDS: "+allMatches);
                     }
                     //displaying the first match
                     if (matches != null) {
@@ -968,7 +976,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     || word.equalsIgnoreCase("going in")
                                     || word.equalsIgnoreCase("login")
                                     || word.equalsIgnoreCase("masuk")) {
-                                mWord = "IN";
+//                                mWord = "IN";
                                 stopListeningVoiceCommand();
                                 resetSpeechRecognizer();
                                 showDebug("Word IN detected, proceed to post clock in...");
@@ -993,7 +1001,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     word.equalsIgnoreCase("clock out") ||
                                     word.equalsIgnoreCase("going out") ||
                                     word.equalsIgnoreCase("keluar")) {
-                                mWord = "OUT";
+//                                mWord = "OUT";
                                 stopListeningVoiceCommand();
                                 resetSpeechRecognizer();
                                 showDebug("Word OUT detected, proceed to post clock out...");
@@ -1017,7 +1025,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 break;
                             } else if(word.equalsIgnoreCase("batal") ||
                                         word.equalsIgnoreCase("cancel")) {
-                                mWord = "CANCEL";
+//                                mWord = "CANCEL";
                                 stopListeningVoiceCommand();
                                 resetSpeechRecognizer();
                                 showDebug("Word Cancel detected, quiting...");
@@ -1160,6 +1168,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         hideTextProgress();
         hideProgressSpinKit();
         clearBB();
+        hideScanAnim();
         resetLivenessVariables();
         showDebug("FD TIMER stopped");
         stopStandbyTimer();
@@ -1536,6 +1545,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void doPingAndPost(final DetectionProto.Detection detection) {
         showDebug("doPingAndPost");
         mIsProcessing = true;
+        startAnim = true;
         displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
         client.setMaxRetriesAndTimeout(1,1000);
@@ -1568,6 +1578,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if (!Python.isStarted()) {
             displayToastError(null, "Internal error, cannot start compiler engine");
             delayedFinishProcessFlag();
+            hideScanAnim();
             return;
         }
         Python python = Python.getInstance();
@@ -1580,6 +1591,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             hideProgressSpinKit();
             hideTextProgress();
             displayBottomMessageError(null, "Tidak ada data di database lokal.");
+            hideScanAnim();
             return;
         }
         Prediction prediction = new Prediction(encoding, encodings, mThresholdDistanceFaceEmbedding);
@@ -1589,6 +1601,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         String name = mDbHelper.getUserName(userMatch);
         if(userMatch.isEmpty()) {
             showDebug("No Match");
+            hideScanAnim();
         } else {
             String msg = ">>> " + userMatch + ":" + name + ":" + dist + ", ";
 //            showDebug(msg);
@@ -1600,6 +1613,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
             hideProgressSpinKit();
             hideTextProgress();
+            hideScanAnim();
             if(userMatch.isEmpty()) {
                 displayBottomMessageUnknown();
                 speakFeedback("Tidak dikenal.");
@@ -1626,6 +1640,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             showDebug("No face match");
             hideProgressSpinKit();
             hideTextProgress();
+            hideScanAnim();
             return;
         }
     }
@@ -1682,6 +1697,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 showDebug("Database encoding empty in server");
                             else
                                 showDebug("No Match");
+                            hideScanAnim();
                         } else {
                             showDebug(msg);
                         }
@@ -1691,6 +1707,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             // debug is on and no need post attendance then quit
                             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
 //                            mIsProcessing = false;
+                            hideScanAnim();
                             hideProgressSpinKit();
                             hideTextProgress();
                             if(firstUserid.isEmpty()) {
@@ -1725,6 +1742,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             showDebug("No face match");
                             hideProgressSpinKit();
                             hideTextProgress();
+                            hideScanAnim();
                             return;
                         }
                     }
@@ -1733,8 +1751,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     // success but not return 200, nothing we have here, repeat the process
                     showDebug("Prediction success but response not 200, should not be happened");
                     mIsProcessing = false;
+//                    startAnim = false;
                     hideProgressSpinKit();
                     hideTextProgress();
+                    hideScanAnim();
                 }
             }
 
@@ -1761,6 +1781,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                mIsProcessing = false;
                     hideProgressSpinKit();
                 }
+                hideScanAnim();
             }
         });
     }
@@ -1772,6 +1793,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         showDebug("AutoMode is disabled");
         // in NON AUTOMODE, user is asked to confirm everytime before sending data to DB
         // no need to check last record IN/OUT because user is requested to provide the IN/OUT
+        hideScanAnim();
         playDing();
         displayBottomAttendanceConfirm(userId, name, /*mCroppedBitmap*/mBitmapBig, online);
         startListeningVoiceCommand();
@@ -1848,6 +1870,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
             speakWelcome(name);
             hideProgressSpinKit();
+            hideScanAnim();
         } else {
             // not the first time, check autotimeout first
             String createdAtLast = lastAttendance.getCreatedAt();
@@ -1885,6 +1908,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 msg = msg + " WIB";
                 displayBottomMessageWarning(msg);
                 hideProgressSpinKit();
+                hideScanAnim();
                 speakNoProcess();
             } else {
                 // more than AutoTimeout
@@ -1893,12 +1917,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     insertAttendance(attendanceOut);
                     displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_OUT, false);
                     hideProgressSpinKit();
+                    hideScanAnim();
                     speakGoodbye(name);
                 } else {
                     // do clock in
                     insertAttendance(attendanceIn);
                     displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
                     hideProgressSpinKit();
+                    hideScanAnim();
                     speakWelcome(name);
                 }
 
@@ -1977,7 +2003,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 msg = msg + " WIB";
                                 displayBottomMessageWarning(msg);
                                 hideProgressSpinKit();
+                                hideScanAnim();
                                 speakNoProcess();
+
 
                             } else {
                                 // more than AutoTimeout
@@ -1991,7 +2019,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             e.printStackTrace();
                             showDebug(e.toString());
                             mIsProcessing = false;
+//                            startAnim = false;
                             hideProgressSpinKit();
+                            hideScanAnim();
                         }
                     }
                 }
@@ -2003,6 +2033,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 displayBottomMessageError(error, "Internal Error");
 //                mIsProcessing = false;
                 hideProgressSpinKit();
+                hideScanAnim();
             }
         });
     }
@@ -2058,6 +2089,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 insertAttendance(attendance);
                 hideProgressSpinKit();
                 hideTextProgress();
+                hideScanAnim();
             }
 
             @Override
@@ -2069,6 +2101,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 showDebug("Error: postAttendance-onFailure-status=" + statusCode + ",error=" + er);
                 hideProgressSpinKit();
                 hideTextProgress();
+                hideScanAnim();
             }
 
         });
@@ -2513,6 +2546,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void run() {
                 showDebug("DELAYED FINISH PROCESS FLAG");
                 mIsProcessing = false;
+
             }
         };
         handler.postDelayed(runnable, mDelayTimeBetweenProcess);
@@ -2583,33 +2617,33 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         handler.postDelayed(runnable, 3000);
     }
 
-    private Dialog mDialogScanner;
-    private void displayScanFrame() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mDialogScanner = new Dialog(mContext, R.style.DialogTheme);
-                LayoutInflater inflater = getLayoutInflater();
-                View dialogView = inflater.inflate(R.layout.dialog_scan, null);
-                mDialogScanner.setContentView(dialogView);
-                Window window = mDialogScanner.getWindow();
-                window.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-                window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-                mDialogScanner.show();
-            }
-        });
-
-    }
-
-    private void hideScanFrame() {
-        if(mDialogScanner==null) return;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mDialogScanner.dismiss();
-            }
-        });
-    }
+//    private void hideScanFrame() {
+//        if(mDialogScanner==null) return;
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                mDialogScanner.dismiss();
+//            }
+//        });
+//    }
+//
+//    private Dialog mDialogScanner;
+//    private void displayScanFrame() {
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                mDialogScanner = new Dialog(mContext, R.style.DialogTheme);
+//                LayoutInflater inflater = getLayoutInflater();
+//                View dialogView = inflater.inflate(R.layout.dialog_scan, null);
+//                mDialogScanner.setContentView(dialogView);
+//                Window window = mDialogScanner.getWindow();
+//                window.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+//                window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//                mDialogScanner.show();
+//            }
+//        });
+//
+//    }
 
     private void onEmailClick() {
         final AlertDialog dialog = new AlertDialog.Builder(this).create();
@@ -3063,6 +3097,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void doPingAndLiveness(String faceString) {
         showDebug("doPingAndLiveness");
         mIsProcessing = true;
+        startAnim = true;
 //        displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
         client.setMaxRetriesAndTimeout(1,1000);
@@ -3194,7 +3229,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 try {
                     // since tensorflow input image is scaled down, so we need to scale it up
                     // to get proper face position
-//                    float[] bb_left_top_o = bb_left_top;
                     Matrix matrixScale = new Matrix();
                     matrixScale.setScale(previewWidth/ mTensorImageSize, 1,
                             previewWidth/2, previewHeight/2);
@@ -3212,12 +3246,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     float faceAreaThreshold = mFaceAreas[mFaceDistanceCategory];
                     if(faceArea > (surfaceArea * faceAreaThreshold)) {
                         mFaceInArea = true;
-                        drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
-                        int width = round(2.0f*(bb_right_top[0]-bb_left_top[0])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_right_top[0]-bb_left_top[0], mContext));
-                        int height = round(2.5f*(bb_left_bottom[1]-bb_left_top[1])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_bottom[1]-bb_left_top[1], mContext));
-                        int X = round(bb_left_top[0])-10; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[0], mContext));
-                        int Y = round(bb_left_top[1])+20; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[1], mContext));
-                        showScanAnim(width, height, X, Y);
+
+//                        int width = round(2.0f*(bb_right_top[0]-bb_left_top[0])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_right_top[0]-bb_left_top[0], mContext));
+//                        int height = round(2.5f*(bb_left_bottom[1]-bb_left_top[1])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_bottom[1]-bb_left_top[1], mContext));
+//                        int X = round(bb_left_top[0])-10; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[0], mContext));
+                        int Y = round(bb_left_top[1])-120; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[1], mContext));
+                        if(startAnim) {
+                            showScanAnim(Y);
+                            clearBB();
+                        } else {
+                            drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                        }
                         stopStandbyTimer();
 //                        showDebug("Put on for Screen...");
                         screenOn();
@@ -3406,6 +3445,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 return;
                             }
                             stopStandbyTimerForProcess();
+
                             if(online) {
                                 predictOnline(croppedBitmap);
                             } else {

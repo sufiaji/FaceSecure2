@@ -25,11 +25,11 @@ public class BottomSheetFragmentMessage extends BottomSheetDialogFragment {
     public void setupDialog(@NonNull Dialog dialog, int style) {
         String msgType = getArguments().getString(MainActivity.ARGS_MESSAGE_TYPE);
         if(msgType.equalsIgnoreCase(MainActivity.MESSAGE_PERSON_UNKNOWN)) {
-            View view = View.inflate(getContext(), R.layout.fragment_bottom_unknown, null);
+            View view = View.inflate(getContext(), R.layout.include_layout_unknown, null);
             dialog.setContentView(view);
             ((View) view.getParent()).setBackgroundColor(getResources().getColor(android.R.color.transparent));
         } else {
-            View view = View.inflate(getContext(), R.layout.fragment_bottom_message, null);
+            View view = View.inflate(getContext(), R.layout.include_layout_message, null);
             dialog.setContentView(view);
             ((View) view.getParent()).setBackgroundColor(getResources().getColor(android.R.color.transparent));
             RelativeLayout titleLayout = view.findViewById(R.id.bottom_message_title);

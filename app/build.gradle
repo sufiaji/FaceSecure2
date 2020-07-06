@@ -138,4 +138,7 @@ dependencies {
     implementation 'com.github.aakira:compound-icon-textview:1.2.1@aar'
     // circle button
 //    implementation 'com.cuboid:cuboidcirclebutton:1.0.5'
+    implementation 'com.daimajia.easing:library:2.0@aar'
+    implementation 'com.daimajia.androidanimations:library:2.3@aar'
+    //
 }

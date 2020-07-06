@@ -5,8 +5,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
 
+import android.animation.Animator;
 import android.app.AlarmManager;
-import android.app.Dialog;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -18,7 +18,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
-import android.graphics.drawable.ColorDrawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -59,6 +58,9 @@ import com.airbnb.lottie.LottieComposition;
 import com.airbnb.lottie.LottieDrawable;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
+import com.daimajia.androidanimations.library.Techniques;
+import com.daimajia.androidanimations.library.YoYo;
+import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.ybq.android.spinkit.SpinKitView;
@@ -72,11 +74,13 @@ import com.google.mediapipe.formats.proto.DetectionProto;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
+import com.jackandphantom.circularimageview.CircleImage;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
 import com.merkaba.facesecure2.R;
 import com.merkaba.facesecure2.model.Attendance;
+import com.merkaba.facesecure2.model.CountDownAnimation;
 import com.merkaba.facesecure2.model.Prediction;
 import com.merkaba.facesecure2.receiver.EmailAlarmReceiver;
 import com.merkaba.facesecure2.utils.DateUtils;
@@ -86,11 +90,9 @@ import com.merkaba.facesecure2.model.Encoding;
 import com.merkaba.facesecure2.model.OneCameraXPreviewHelper;
 import com.merkaba.facesecure2.model.User;
 import com.merkaba.facesecure2.utils.DatabaseHelper;
-import com.merkaba.facesecure2.utils.DeviceDimensionsHelper;
 import com.merkaba.facesecure2.utils.SendEmailService;
 import com.merkaba.facesecure2.utils.Utils;
-import com.merkaba.facesecure2.view.BottomSheetFragmentConfirm;
-import com.merkaba.facesecure2.view.BottomSheetFragmentMessage;
+//import com.merkaba.facesecure2.view.BottomSheetFragmentConfirm;
 import com.merkaba.facesecure2.view.BottomSheetFragmentOk;
 import com.merkaba.facesecure2.view.PaintView;
 import com.ornach.nobobutton.NoboButton;
@@ -118,6 +120,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import cz.msebera.android.httpclient.Header;
+import needle.Needle;
+
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static java.lang.Math.round;
@@ -568,11 +572,22 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void mute() {
-        mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 0, 0);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 0, 0);
+            }
+        });
+
     }
 
     private void unMute() {
-        mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mVolume, 0);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mAudioManager.setStreamVolume(AudioManager.STREAM_RING, mVolume, 0);
+            }
+        });
     }
 
     private void clearBB() {
@@ -584,18 +599,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
-    private ImageView imageScan;
+    private ImageView mImageScan;
     private void initScanAnim() {
         LottieDrawable lottieDrawable = new LottieDrawable();
-        imageScan = findViewById(R.id.image_anim);
-        imageScan.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        imageScan.setImageDrawable(lottieDrawable);
+
+        mImageScan = findViewById(R.id.image_anim_scan);
+        mImageScan.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        mImageScan.setImageDrawable(lottieDrawable);
         LottieComposition.Factory.fromAssetFileName(this, "scan4.json", (composition) -> {
             lottieDrawable.setComposition(composition);
             lottieDrawable.loop(true);
+
             lottieDrawable.playAnimation();
         });
-        imageScan.setVisibility(View.INVISIBLE);
+        mImageScan.setVisibility(View.INVISIBLE);
     }
 
     private boolean isShowScanner = false;
@@ -605,12 +622,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    imageScan.setVisibility(View.VISIBLE);
-                    imageScan.requestLayout();
+                    mImageScan.setVisibility(View.VISIBLE);
+                    mImageScan.requestLayout();
 //                    imageScan.getLayoutParams().height = height;
 //                    imageScan.getLayoutParams().width = width;
 //                    imageScan.setLeft(X);
-                    imageScan.setY(Y);
+                    mImageScan.setY(Y);
                     isShowScanner = true;
                 }
             });
@@ -623,7 +640,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                imageScan.setVisibility(View.INVISIBLE);
+                mImageScan.setVisibility(View.INVISIBLE);
                 isShowScanner = false;
             }
         });
@@ -694,11 +711,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         } else {
 //                            showDebug("Liveness status on Timer: " + mFaceLivenessStatus);
                             mIsProcessing = true;
-                            startAnim = true;
+//                            startAnim = true;
                             if(mFaceLivenessStatus.equalsIgnoreCase(FACE_REAL)) {
                                 // if Liveness already finished and status is REAL, continue process attendnace
                                 showDebug("Liveness status on Timer REAL, begin process Attendance");
+                                startAnim = true;
                                 beginProcessAttendance();
+
                             } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_FAKE)) {
 //                                mIsProcessing = true;
                                 displayToastError(null, "Gambar terdeteksi");
@@ -744,7 +763,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                                showDebug("Timer finish on liveness");
                                 mIsProcessing = true;
                                 mTimerFDAndLivenessIsFinished = true;
-                                startAnim = true;
+//                                startAnim = true;
                                 // check if face is real
                                 float realPortion = (float) mLivenessRealCounter / (float) mLivenessFrameCounter;
                                 if(realPortion >= THRESHOLD_REAL_NUM_FRAME_PERCENTAGE) {
@@ -753,7 +772,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     showDebug("Liveness status REAL, begin process attendance");
                                     if(mDebug)
                                         displayToastSuccess("REAL");
+                                    startAnim = true;
                                     beginProcessAttendance();
+
                                 } else {
 //                                    mIsProcessing = true;
                                     if(mLivenessUnavailCounter > 0)
@@ -854,14 +875,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         }
     }
-//
-//    private void startLivenessBurst() {
-//        int i=0;
-//        do {
-//            startLivenessThread();
-//            i++;
-//        } while (i<=LIVENESS_COUNTER_MAX);
-//    }
 
     private void startLivenessThread() {
 //        showDebug("Start Liveness Thread");
@@ -953,7 +966,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 @Override
                 public void onError(int error) {
                     resetSpeechRecognizer();
-                    startListeningVoiceCommand();
+                    startListeningVoiceCommandUIThreadNoSound();
                 }
 
                 @Override
@@ -971,68 +984,22 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     //displaying the first match
                     if (matches != null) {
                         for(String word : matches) {
-                            if(word.equalsIgnoreCase("in")
-                                    || word.equalsIgnoreCase("clock in")
-                                    || word.equalsIgnoreCase("going in")
-                                    || word.equalsIgnoreCase("login")
-                                    || word.equalsIgnoreCase("masuk")) {
-//                                mWord = "IN";
-                                stopListeningVoiceCommand();
-                                resetSpeechRecognizer();
-                                showDebug("Word IN detected, proceed to post clock in...");
-                                if (mIsOnline)
-                                    postAttendanceOnline(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_IN, mCroppedBitmap);
-                                else {
-                                    String createdAt = new DateUtils("-").getCurrentDate();
-                                    String createdOn = new DateUtils("-").getCurrentTime();
-                                    long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
-                                    Attendance attendance = new Attendance(mUserIdPostAttendance, createdDateTime, STRING_CLOCK_IN, mLocation, mCroppedBitmap, "X");
-                                    insertAttendance(attendance);
-                                    hideProgressSpinKit();
-                                    hideTextProgress();
-                                    speakFeedback("Halo " + mUsernamePostAttendance + ", selamat datang!");
-                                    displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, mUsernamePostAttendance,
-                                            mUserIdPostAttendance, STRING_CLOCK_IN, false);
-                                }
-                                mDialogAttendanceConfirm.dismiss();
+                            if(word.contains("clock in")
+                                    || word.contains("going in")
+                                    || word.contains("login")
+                                    || word.contains("masuk")) {
+                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_IN, mIsOnline, mCroppedBitmap);
                                 break;
-                            } else if(word.equalsIgnoreCase("out") ||
-                                    word.equalsIgnoreCase("logout") ||
-                                    word.equalsIgnoreCase("clock out") ||
-                                    word.equalsIgnoreCase("going out") ||
-                                    word.equalsIgnoreCase("keluar")) {
-//                                mWord = "OUT";
-                                stopListeningVoiceCommand();
-                                resetSpeechRecognizer();
-                                showDebug("Word OUT detected, proceed to post clock out...");
-                                if(mIsOnline)
-                                    postAttendanceOnline(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_OUT, mCroppedBitmap);
-                                else {
-                                    String createdAt = new DateUtils("-").getCurrentDate();
-                                    String createdOn = new DateUtils("-").getCurrentTime();
-                                    long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
-                                    Attendance attendance = new Attendance(mUserIdPostAttendance,
-                                            createdDateTime, STRING_CLOCK_OUT, mLocation, mCroppedBitmap, "X");
-                                    insertAttendance(attendance);
-//                                    mIsProcessing = false;
-                                    hideProgressSpinKit();
-                                    hideTextProgress();
-                                    speakFeedback("Sampai jumpa, " + mUsernamePostAttendance);
-                                    displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, mUsernamePostAttendance,
-                                            mUserIdPostAttendance, STRING_CLOCK_OUT, false);
-                                }
-                                mDialogAttendanceConfirm.dismiss();
+                            } else if(word.contains("clock out") ||
+                                    word.contains("logout") ||
+                                    word.contains("luar") ||
+                                    word.contains("going out") ||
+                                    word.contains("keluar")) {
+                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_OUT, mIsOnline, mCroppedBitmap);
                                 break;
-                            } else if(word.equalsIgnoreCase("batal") ||
-                                        word.equalsIgnoreCase("cancel")) {
-//                                mWord = "CANCEL";
-                                stopListeningVoiceCommand();
-                                resetSpeechRecognizer();
-                                showDebug("Word Cancel detected, quiting...");
-                                hideProgressSpinKit();
-                                mDialogAttendanceConfirm.dismiss();
-                                speakFeedback("Dibatalkan. Terima kasih");
-                                displayBottomMessageSuccess("Dibatalkan, data kehadiran tidak disimpan.");
+                            } else if(word.contains("batal") ||
+                                        word.contains("cancel")) {
+                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_CANCEL, mIsOnline, mCroppedBitmap);
                                 break;
                             }
                         }
@@ -1123,7 +1090,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         if(mTextToSpeech!=null) {
-            mTextToSpeech.setSpeechRate(1.5f);
+            mTextToSpeech.setSpeechRate(2.0f);
         }
     }
 
@@ -1182,6 +1149,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void onStartClick() {
+//        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.aji_thumb1);
+//        displayBottomAttendanceConfirm("11111111", "Aji", bitmap, true);
 //        testdisplay();
         if(mIsStart)
             stopProgram();
@@ -1590,7 +1559,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             showDebug("No encoding record in database. Quit.");
             hideProgressSpinKit();
             hideTextProgress();
-            displayBottomMessageError(null, "Tidak ada data di database lokal.");
+            displayBottomMessageError(null, "Tidak ada data di database.");
             hideScanAnim();
             return;
         }
@@ -1790,13 +1759,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void manualMode(final String userId, final String name,
                             final Bitmap croppedBitmap, final boolean online) {
         // MANUAL MODE
-        showDebug("AutoMode is disabled");
+        showDebug("Entering Attendance process offline");
         // in NON AUTOMODE, user is asked to confirm everytime before sending data to DB
         // no need to check last record IN/OUT because user is requested to provide the IN/OUT
         hideScanAnim();
-        playDing();
-        displayBottomAttendanceConfirm(userId, name, /*mCroppedBitmap*/mBitmapBig, online);
-        startListeningVoiceCommand();
+//        playDing();
+//        playDingAndStartListening();
+        displayBottomAttendanceConfirmUIThread(userId, name, /*mCroppedBitmap*/mBitmapBig, online);
+        startListeningVoiceCommandUIThread();
     }
 
     private String mUserIdPostAttendance;
@@ -1804,17 +1774,42 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private boolean mIsOnline = false;
 
     private void playDing() {
-        MediaPlayer mPlayer = MediaPlayer.create(mContext, R.raw.pristine);
-        mPlayer.setLooping(false);
-        mPlayer.start();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mPlayer = MediaPlayer.create(mContext, R.raw.pristine2);
+                mPlayer.setLooping(false);
+                mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mediaPlayer) {
+                        mute();
+                    }
+                });
+                mPlayer.start();
+            }
+        });
+
     }
 
-    private void startListeningVoiceCommand() {
+    private void startListeningVoiceCommandUIThreadNoSound() {
         if(mVoiceCommand) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     mute();
+                    mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
+                    showDebug("Start listening called");
+                }
+            });
+        }
+    }
+
+    private void startListeningVoiceCommandUIThread() {
+        if(mVoiceCommand) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+//                    mute();
                     mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
                     showDebug("Start listening called");
                 }
@@ -2447,21 +2442,277 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
-    private BottomSheetFragmentConfirm mDialogAttendanceConfirm;
-    public void displayBottomAttendanceConfirm(String nik, String name, Bitmap face, boolean online) {
-        mDialogAttendanceConfirm = new BottomSheetFragmentConfirm();
-        mDialogAttendanceConfirm.setCancelable(false);
-        Bundle bundle = new Bundle();
-        bundle.putString(ARGS_ID, nik);
-        bundle.putByteArray(ARGS_BITMAP, Utils.getBitmapAsByteArray(face));
-        bundle.putInt(ARGS_TIMER_WAITING_VOICE_COMMAND, mVoiceCommandWaitingTimer);
-        bundle.putBoolean(ARGS_ONLINE_STATUS, online);
-        bundle.putString(ARGS_NICKNAME, name);
-        mDialogAttendanceConfirm.setArguments(bundle);
-        mDialogAttendanceConfirm.show(getSupportFragmentManager(), "Attendance Confirm");
+    private CountDownAnimation mCountDownAnimation;
+    private void displayBottomAttendanceConfirmUIThread(String nik, String name, Bitmap face, boolean online) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                displayBottomAttendanceConfirm(nik, name, face, online);
+            }
+        });
+    }
+
+    private void displayBottomAttendanceConfirm(String nik, String name, Bitmap face, boolean online) {
+
+        // get the layout of attendance confirmation
+        showDebug("Display Attendance confirmation");
+        RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm);
+        TextView textCountdown = findViewById(R.id.text_counter);
+
+        // the countdown
+        mCountDownAnimation = new CountDownAnimation(textCountdown, mVoiceCommandWaitingTimer);
+        mCountDownAnimation.setCountDownListener(new CountDownAnimation.CountDownListener() {
+            @Override
+            public void onCountDownEnd(CountDownAnimation animation) {
+                showDebug("Counter done.");
+                onAttendanceConfirmCounterEnd();
+                dismissAttendanceConfirm();
+
+            }
+        });
+
+        // set name and nik
+        TextView textViewName = findViewById(R.id.tv_name);
+        textViewName.setText(name);
+        TextView textViewId = findViewById(R.id.tv_nik);
+        textViewId.setText(nik);
+        CircleImage ci = findViewById(R.id.iv_thumb);
+        ci.setImageBitmap(face);
+
+        // set date and time
+        TextView textViewDate = findViewById(R.id.tv_date);
+        DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
+        Date d = new Date();
+        String formattedCurrentDate = df.format(d);
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
+        String dayOfTheWeek = sdf.format(d);
+        textViewDate.setText(dayOfTheWeek + ", " + formattedCurrentDate);
+        TextView textViewTime = findViewById(R.id.tv_time);
+        SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
+        String textTime = sdft.format(d);
+        textViewTime.setText(textTime + " WIB");
+
+        // set online/offline
+        CompoundIconTextView textViewOffline = findViewById(R.id.tv_offline);
+        CompoundIconTextView textViewOnline = findViewById(R.id.tv_online);
+        textViewOffline.setVisibility(View.GONE);
+        textViewOnline.setVisibility(View.GONE);
+        if(online) {
+            textViewOnline.setVisibility(View.VISIBLE);
+        } else {
+            textViewOffline.setVisibility(View.VISIBLE);
+        }
+
+        layoutAttendanceConfirm.setVisibility(View.VISIBLE);
+        YoYo.with(Techniques.SlideInUp)
+                .duration(500)
+                .playOn(layoutAttendanceConfirm);
+
+        // start countdown
+        mCountDownAnimation.start();
+
+        // button callback
+        Button btnCancel = findViewById(R.id.btn_cancel);
+        btnCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBottomSheetButtonClick(nik, name, STRING_CLOCK_CANCEL, online, face);
+
+            }
+        });
+
+        Button btnClockin = findViewById(R.id.btn_clockin);
+        btnClockin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBottomSheetButtonClick(nik, name, STRING_CLOCK_IN, online, face);
+//                dismissAttendanceConfirm();
+            }
+        });
+
+        Button btnClockout = findViewById(R.id.btn_clockout);
+        btnClockout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBottomSheetButtonClick(nik, name, STRING_CLOCK_OUT, online, face);
+//                dismissAttendanceConfirm();
+            }
+        });
+    }
+
+    private void stopCountdownTimer() {
+        if(mCountDownAnimation !=null) {
+            mCountDownAnimation.cancel();
+        }
+    }
+
+    private void dismissAttendanceConfirm() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm);
+                YoYo.with(Techniques.SlideOutDown)
+                        .duration(500)
+                        .playOn(layoutAttendanceConfirm);
+                stopCountdownTimer();
+            }
+        });
     }
 
     private void displayBottomAttendanceOk(Bitmap face, String name, String nik, String aType, boolean online) {
+        //
+        if(aType.equalsIgnoreCase(STRING_CLOCK_OUT)) {
+            LottieDrawable lottieDrawable = new LottieDrawable();
+            lottieDrawable.setMaxFrame(60);
+            lottieDrawable.setMinFrame(30);
+            lottieDrawable.setSpeed(0.5f);
+            ImageView imageAnim = findViewById(R.id.image_lottie);
+            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            imageAnim.setImageDrawable(lottieDrawable);
+            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
+                lottieDrawable.setComposition(composition);
+                lottieDrawable.loop(false);
+                lottieDrawable.playAnimation();
+            });
+        } else if(aType.equalsIgnoreCase(STRING_CLOCK_IN)) {
+            LottieDrawable lottieDrawable = new LottieDrawable();
+            lottieDrawable.setMaxFrame(30);
+            lottieDrawable.setMinFrame(0);
+            lottieDrawable.setSpeed(0.5f);
+            ImageView imageAnim = findViewById(R.id.image_lottie);
+            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            imageAnim.setImageDrawable(lottieDrawable);
+            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
+                lottieDrawable.setComposition(composition);
+                lottieDrawable.loop(false);
+                lottieDrawable.playAnimation();
+            });
+        } else if(aType.equalsIgnoreCase(STRING_CLOCK_CANCEL)) {
+            LottieDrawable lottieDrawable = new LottieDrawable();
+            lottieDrawable.setMaxFrame(30);
+            lottieDrawable.setMinFrame(0);
+            lottieDrawable.setSpeed(0.5f);
+            ImageView imageAnim = findViewById(R.id.image_lottie);
+            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+            imageAnim.setImageDrawable(lottieDrawable);
+            LottieComposition.Factory.fromAssetFileName(mContext, "anim_cancel.json", (composition) -> {
+                lottieDrawable.setComposition(composition);
+                lottieDrawable.loop(false);
+                lottieDrawable.playAnimation();
+            });
+        }
+        // layout
+        LinearLayout layoutAttendanceOk = findViewById(R.id.layout_bottom_att_ok);
+        layoutAttendanceOk.setVisibility(View.VISIBLE);
+        YoYo.with(Techniques.SlideInUp)
+                .duration(500)
+                .onEnd(new YoYo.AnimatorCallback() {
+                    @Override
+                    public void call(Animator animator) {
+//                        if(aType.equalsIgnoreCase(STRING_CLOCK_OUT)) {
+//                            LottieDrawable lottieDrawable = new LottieDrawable();
+//                            lottieDrawable.setMaxFrame(60);
+//                            lottieDrawable.setMinFrame(30);
+//                            lottieDrawable.setSpeed(0.5f);
+//                            ImageView imageAnim = findViewById(R.id.image_lottie);
+//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+//                            imageAnim.setImageDrawable(lottieDrawable);
+//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
+//                                lottieDrawable.setComposition(composition);
+//                                lottieDrawable.loop(false);
+//                                lottieDrawable.playAnimation();
+//                            });
+//                        } else if(aType.equalsIgnoreCase(STRING_CLOCK_IN)) {
+//                            LottieDrawable lottieDrawable = new LottieDrawable();
+//                            lottieDrawable.setMaxFrame(30);
+//                            lottieDrawable.setMinFrame(0);
+//                            lottieDrawable.setSpeed(0.5f);
+//                            ImageView imageAnim = findViewById(R.id.image_lottie);
+//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+//                            imageAnim.setImageDrawable(lottieDrawable);
+//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
+//                                lottieDrawable.setComposition(composition);
+//                                lottieDrawable.loop(false);
+//                                lottieDrawable.playAnimation();
+//                            });
+//                        } else if(aType.equalsIgnoreCase(STRING_CLOCK_CANCEL)) {
+//                            LottieDrawable lottieDrawable = new LottieDrawable();
+//                            lottieDrawable.setMaxFrame(30);
+//                            lottieDrawable.setMinFrame(0);
+//                            lottieDrawable.setSpeed(0.5f);
+//                            ImageView imageAnim = findViewById(R.id.image_lottie);
+//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+//                            imageAnim.setImageDrawable(lottieDrawable);
+//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_cancel.json", (composition) -> {
+//                                lottieDrawable.setComposition(composition);
+//                                lottieDrawable.loop(false);
+//                                lottieDrawable.playAnimation();
+//                            });
+//                        }
+                    }
+                })
+                .playOn(layoutAttendanceOk);
+
+        TextView tvName = findViewById(R.id.tv_name);
+        tvName.setText(name);
+        TextView tvNik = findViewById(R.id.tv_nik);
+        tvNik.setText(nik);
+        CompoundIconTextView textViewOffline = findViewById(R.id.tv_offline);
+        CompoundIconTextView textViewOnline = findViewById(R.id.tv_online);
+        if(online) {
+            textViewOffline.setVisibility(View.GONE);
+            textViewOnline.setVisibility(View.VISIBLE);
+        } else {
+            textViewOffline.setVisibility(View.VISIBLE);
+            textViewOnline.setVisibility(View.GONE);
+        }
+        TextView textViewDate = findViewById(R.id.tv_date);
+        DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
+        Date d = new Date();
+        String formattedCurrentDate = df.format(d);
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
+        String dayOfTheWeek = sdf.format(d);
+        textViewDate.setText(dayOfTheWeek + ", " + formattedCurrentDate);
+        TextView textViewTime = findViewById(R.id.tv_time);
+        SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
+        String textTime = sdft.format(d);
+        textViewTime.setText(textTime + " WIB");
+        CircleImage ci = findViewById(R.id.iv_thumb);
+        ci.setImageBitmap(face);
+
+        final Handler handler  = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        YoYo.with(Techniques.SlideOutDown)
+                                .duration(500)
+                                .playOn(layoutAttendanceOk);
+                        delayedFinishProcessFlag();
+                    }
+                });
+            }
+        };
+        handler.postDelayed(runnable, 4000);
+    }
+
+//    private BottomSheetFragmentConfirm mDialogAttendanceConfirm;
+//    public void displayBottomAttendanceConfirm2(String nik, String name, Bitmap face, boolean online) {
+//        mDialogAttendanceConfirm = new BottomSheetFragmentConfirm();
+//        mDialogAttendanceConfirm.setCancelable(false);
+//        Bundle bundle = new Bundle();
+//        bundle.putString(ARGS_ID, nik);
+//        bundle.putByteArray(ARGS_BITMAP, Utils.getBitmapAsByteArray(face));
+//        bundle.putInt(ARGS_TIMER_WAITING_VOICE_COMMAND, mVoiceCommandWaitingTimer);
+//        bundle.putBoolean(ARGS_ONLINE_STATUS, online);
+//        bundle.putString(ARGS_NICKNAME, name);
+//        mDialogAttendanceConfirm.setArguments(bundle);
+//        mDialogAttendanceConfirm.show(getSupportFragmentManager(), "Attendance Confirm");
+//    }
+
+    private void displayBottomAttendanceOk2(Bitmap face, String name, String nik, String aType, boolean online) {
         BottomSheetFragmentOk dialog = new BottomSheetFragmentOk();
         dialog.setCancelable(false);
         Bundle bundle = new Bundle();
@@ -2485,8 +2736,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         handler.postDelayed(runnable, 4000);
     }
 
-    public void onBottomSheetButtonClick(String userId, String name,
+    private void onBottomSheetButtonClick(String userId, String name,
                                          String attType, boolean online, Bitmap face) {
+        dismissAttendanceConfirm();
         stopListeningVoiceCommand();
         resetSpeechRecognizerUIThread();
         String createdAt = new DateUtils("-").getCurrentDate();
@@ -2499,10 +2751,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             speakFeedback("Dibatalkan, terima kasih.");
         } else if(attType.equals(STRING_CLOCK_IN)) {
             if(online) {
-                showDebug("IN clicked on offline mode");
+//                showDebug("IN clicked on offline mode");
                 postAttendanceOnline(userId, name, attType, face);
             } else {
-                showDebug("IN clicked on offline mode");
+//                showDebug("IN clicked on offline mode");
                 final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
                 Attendance attendance = new Attendance(userId, createdDateTime,
                         attType, mLocation, face, "X");
@@ -2553,25 +2805,61 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void displayBottomMessage(String type, String message) {
-        BottomSheetFragmentMessage dialog = new BottomSheetFragmentMessage();
-        dialog.setCancelable(false);
-        Bundle bundle = new Bundle();
-        bundle.putString(ARGS_MESSAGE_TYPE, type);
-        bundle.putString(ARGS_MESSAGE_CONTENT, message);
-        dialog.setArguments(bundle);
-        dialog.show(getSupportFragmentManager(), "message");
-        final Handler handler  = new Handler();
-        final Runnable runnable = new Runnable() {
+
+        RelativeLayout relativeLayout;
+        TextView tvMsg = findViewById(R.id.bottom_message_content);
+        tvMsg.setText(message);
+        CompoundIconTextView tvOnline = findViewById(R.id.tv_online);
+        CompoundIconTextView tvOffline = findViewById(R.id.tv_offline);
+        if(mIsOnline) {
+            tvOnline.setVisibility(View.VISIBLE);
+            tvOffline.setVisibility(View.GONE);
+        } else {
+            tvOffline.setVisibility(View.VISIBLE);
+            tvOnline.setVisibility(View.GONE);
+        }
+        if(type.equalsIgnoreCase(MainActivity.MESSAGE_PERSON_UNKNOWN)) {
+            relativeLayout = findViewById(R.id.layout_bottom_unknown);
+
+        } else {
+            relativeLayout = findViewById(R.id.layout_bottom_message);
+            RelativeLayout titleLayout = findViewById(R.id.bottom_message_title);
+            ImageView ivIcon = findViewById(R.id.bottom_message_icon);
+
+            if (type.equalsIgnoreCase(MainActivity.MESSAGE_ERROR)) {
+                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorRed));
+                ivIcon.setImageResource(R.drawable.ic_error);
+            } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_INFO)) {
+                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorBlue));
+                ivIcon.setImageResource(R.drawable.ic_about);
+            } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_SUCCESS)) {
+                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                ivIcon.setImageResource(R.drawable.ic_ok);
+            } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_WARNING)) {
+                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorYellowDark));
+                ivIcon.setImageResource(R.drawable.ic_warning);
+            }
+        }
+
+        relativeLayout.setVisibility(View.VISIBLE);
+
+        YoYo.with(Techniques.SlideInUp)
+                .duration(700)
+                .playOn(relativeLayout);
+
+        Handler handler = new Handler();
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                if (dialog!=null) {
-                    dialog.dismiss();
-//                    delayedFinishProcessFlag();
-                }
+                YoYo.with(Techniques.SlideOutDown)
+                        .duration(700)
+                        .playOn(relativeLayout)
+                        ;
                 delayedFinishProcessFlag();
             }
         };
-        handler.postDelayed(runnable, 4000);
+        handler.postDelayed(runnable, 3000);
+
     }
 
     private void displayBottomMessage2(String type, String message) {

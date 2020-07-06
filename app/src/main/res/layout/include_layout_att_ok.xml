@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:background="@drawable/layout_bottom_2">
+
+    <LinearLayout
+        android:id="@+id/layout0"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="12dp"
+        android:layout_marginLeft="12dp"
+        android:orientation="horizontal">
+
+        <com.jackandphantom.circularimageview.CircleImage
+            android:id="@+id/iv_thumb"
+            android:layout_width="84dp"
+            android:layout_height="84dp"
+            android:src="@drawable/aji_thumb1"
+            android:layout_marginTop="8dp"
+            android:layout_centerHorizontal="true"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:text="Pradhono Aji" />
+            <TextView
+                android:id="@+id/tv_nik"
+                android:layout_below="@id/tv_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#000000"
+                android:text="00178654" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/image_lottie"
+            android:layout_centerHorizontal="true"
+            android:layout_width="296dp"
+            android:layout_height="wrap_content"
+            android:scaleType="centerInside"/>
+
+        <ImageView
+            android:id="@+id/image_att_cancel"
+            android:layout_width="148dp"
+            android:layout_height="56dp"
+            android:src="@drawable/cancel"
+            android:visibility="invisible"
+            android:layout_centerHorizontal="true"/>
+
+        <ImageView
+            android:id="@+id/image_att_in"
+            android:layout_width="148dp"
+            android:layout_height="56dp"
+            android:src="@drawable/clock_in"
+            android:visibility="invisible"
+            android:layout_centerHorizontal="true"/>
+
+        <ImageView
+            android:id="@+id/image_att_out"
+            android:layout_width="148dp"
+            android:layout_height="56dp"
+            android:src="@drawable/clock_in"
+            android:visibility="invisible"
+            android:layout_centerHorizontal="true"/>
+
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_below="@id/layout3"
+        android:layout_marginTop="12dp"
+        android:layout_marginLeft="6dp"
+        android:layout_marginBottom="6dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:weightSum="5"
+        android:orientation="horizontal">
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="4"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/tv_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Senin, 28 Januari 2020"
+                android:textColor="#000000"
+                android:textSize="14sp"/>
+            <TextView
+                android:id="@+id/tv_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="08:35 WIB"
+                android:textColor="#000000"
+                android:textSize="14sp"/>
+        </LinearLayout>
+        <RelativeLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:layout_height="match_parent">
+
+            <com.github.aakira.compoundicontextview.CompoundIconTextView
+                android:id="@+id/tv_offline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:drawablePadding="4dp"
+                android:text="Offline"
+                android:textColor="#000"
+                android:textSize="12sp"
+                app:cit_drawableLeft="@drawable/ic_circle_red"
+                app:cit_iconHeight="12dp"
+                app:cit_iconWidth="12dp" />
+            <com.github.aakira.compoundicontextview.CompoundIconTextView
+                android:id="@+id/tv_online"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:drawablePadding="4dp"
+                android:visibility="invisible"
+                android:text="Online"
+                android:textColor="#000"
+                android:textSize="12sp"
+                app:cit_drawableLeft="@drawable/ic_circle_green"
+                app:cit_iconHeight="12dp"
+                app:cit_iconWidth="12dp" />
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+
+</LinearLayout>

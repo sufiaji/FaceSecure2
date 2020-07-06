@@ -194,8 +194,7 @@
         android:layout_height="340dp"
         android:layout_centerHorizontal="true"
         android:scaleType="centerInside"
-
-        android:id="@+id/image_anim"/>
+        android:id="@+id/image_anim_scan"/>
 
     <LinearLayout
         android:id="@+id/layout_black"
@@ -205,6 +204,38 @@
         android:orientation="vertical"
         android:visibility="gone"
         android:background="#000000"/>
+
+    <include layout="@layout/include_layout_message"
+        android:id="@+id/layout_bottom_message"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:visibility="invisible"/>
+
+    <include layout="@layout/include_layout_unknown"
+        android:id="@+id/layout_bottom_unknown"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:visibility="invisible"/>
+
+    <include layout="@layout/include_layout_att_confirm"
+        android:id="@+id/layout_bottom_att_confirm"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:visibility="invisible"/>
+
+    <include layout="@layout/include_layout_att_ok"
+        android:id="@+id/layout_bottom_att_ok"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="12dp"
+        android:visibility="invisible"/>
 
 
 </RelativeLayout>

@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/transparent"
+    >
+
+    <RelativeLayout
+        android:id="@+id/rel_anim"
+        android:layout_marginTop="16dp"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="72dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+        <com.airbnb.lottie.LottieAnimationView
+            android:id="@+id/image_thumb"
+            android:layout_width="206dp"
+            android:layout_height="206dp"
+            app:lottie_autoPlay="true"
+            app:lottie_fileName="listening.json"
+            app:lottie_loop="true"
+            android:layout_centerInParent="true" />
+        <TextView
+            android:id="@+id/text_counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="1"
+            android:textStyle="bold"
+            android:textSize="48sp"
+            android:textColor="@color/colorRedDark"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+    <LinearLayout
+        android:layout_below="@id/rel_anim"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/layout_bottom_2"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_marginTop="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:layout_marginBottom="12dp"
+            android:textColor="#000"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="Apakah Anda sedang melakukan"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="12dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:text="cancel"
+                android:textColor="#000"
+                android:textSize="12sp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/buttonshape_clockin"
+
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:layout_toRightOf="@id/btn_clockout"
+                android:shadowRadius="5"
+
+                />
+            <Button
+                android:id="@+id/btn_clockout"
+                android:layout_centerHorizontal="true"
+                android:text="clock out"
+                android:textColor="#000"
+                android:textSize="12sp"
+                android:layout_marginRight="24dp"
+                android:layout_marginLeft="24dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/buttonshape_clockin"
+
+                android:shadowDx="0"
+                android:shadowDy="0"
+                android:shadowRadius="12"
+
+                />
+
+            <Button
+                android:id="@+id/btn_clockin"
+                android:layout_centerHorizontal="true"
+                android:text="Clock In"
+                android:textColor="#000"
+                android:textSize="12sp"
+
+                android:layout_toLeftOf="@id/btn_clockout"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/buttonshape_clockin"
+                android:shadowColor="#576CF2"
+                android:shadowDx="0"
+                android:shadowDy="0"
+
+                />
+
+        </RelativeLayout>
+
+        <LinearLayout
+            android:id="@+id/layout0"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="12dp"
+            android:layout_marginLeft="12dp"
+            android:orientation="horizontal">
+
+            <com.jackandphantom.circularimageview.CircleImage
+                android:id="@+id/iv_thumb"
+                android:layout_width="84dp"
+                android:layout_height="84dp"
+                android:src="@drawable/aji_thumb1"
+                android:layout_marginTop="8dp"
+                android:layout_centerHorizontal="true"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+
+                android:layout_gravity="center_vertical"
+                android:gravity="center_vertical"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="22sp"
+
+                    android:textColor="#000000"
+                    android:text="Pradhono Aji" />
+                <TextView
+                    android:id="@+id/tv_nik"
+                    android:layout_below="@id/tv_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="18sp"
+
+                    android:textColor="#000000"
+                    android:text="00178654" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_below="@id/layout3"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="5"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="4"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Senin, 28 Januari 2020"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tv_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="08:35 WIB"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+            <RelativeLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_height="match_parent">
+
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_offline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:drawablePadding="4dp"
+                    android:text="Offline"
+                    android:textColor="#000"
+                    android:textSize="12sp"
+                    app:cit_drawableLeft="@drawable/ic_circle_red"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_online"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:drawablePadding="4dp"
+                    android:visibility="invisible"
+                    android:text="Online"
+                    android:textColor="#000"
+                    android:textSize="12sp"
+                    app:cit_drawableLeft="@drawable/ic_circle_green"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</RelativeLayout>

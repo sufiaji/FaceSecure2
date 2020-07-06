@@ -32,7 +32,7 @@ import java.util.Locale;
 
 public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
 
-    private CountDownAnimation c;
+    private CountDownAnimation countDownAnimation;
     private Bitmap mFace = null;
     private String mId = "";
     private String mNickname = "";
@@ -52,33 +52,33 @@ public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
         btnIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
-                        MainActivity.STRING_CLOCK_IN, mOnline, mFace);
-                dismiss();
+//                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
+//                        MainActivity.STRING_CLOCK_IN, mOnline, mFace);
+//                dismiss();
             }
         });
         // button Out
         btnOut.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
-                        MainActivity.STRING_CLOCK_OUT, mOnline, mFace);
-                dismiss();
+//                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
+//                        MainActivity.STRING_CLOCK_OUT, mOnline, mFace);
+//                dismiss();
             }
         });
         // button Cancel
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
-                        MainActivity.STRING_CLOCK_CANCEL, mOnline, mFace);
-                dismiss();
+//                ((MainActivity) getActivity()).onBottomSheetButtonClick(mId, mNickname,
+//                        MainActivity.STRING_CLOCK_CANCEL, mOnline, mFace);
+//                dismiss();
             }
         });
 
         TextView t = view.findViewById(R.id.text_counter);
-        c = new CountDownAnimation(t, mSeconder);
-        c.setCountDownListener(new CountDownAnimation.CountDownListener() {
+        countDownAnimation = new CountDownAnimation(t, mSeconder);
+        countDownAnimation.setCountDownListener(new CountDownAnimation.CountDownListener() {
             @Override
             public void onCountDownEnd(CountDownAnimation animation) {
                 ((MainActivity) getActivity()).showDebug("Counter done.");
@@ -122,7 +122,7 @@ public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
         }
         CircleImage ci = view.findViewById(R.id.iv_thumb);
         ci.setImageBitmap(mFace);
-        c.start();
+        countDownAnimation.start();
     }
 
     @Override
@@ -169,9 +169,9 @@ public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
         return displayMetrics.heightPixels;
     }
 
-    public void stopCounter() {
-        if(c!=null) {
-            c.cancel();
+    public void stopCounter1() {
+        if(countDownAnimation !=null) {
+            countDownAnimation.cancel();
         }
         dismiss();
     }
@@ -179,13 +179,13 @@ public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
     @Override
     public void onDismiss(@NonNull DialogInterface dialog) {
         super.onDismiss(dialog);
-        stopCounter();
+//        stopCounter();
     }
 
     @Override
     public void onCancel(@NonNull DialogInterface dialog) {
         super.onCancel(dialog);
-        stopCounter();
+//        stopCounter();
     }
 
     @Override

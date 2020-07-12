@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include layout="@layout/activity_main4_copy"/>
+
+    <ImageView
+        android:id="@+id/image_blur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"/>
+
+    <eightbitlab.com.blurview.BlurView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/layoutBlur">
+
+<!--        <include layout="@layout/include_fab_menu"-->
+<!--            android:id="@+id/layout_fab_menu"/>-->
+
+        <include layout="@layout/include_layout_att_confirm"
+            android:id="@+id/layout_bottom_att_confirm_c"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="bottom"
+            android:layout_margin="12dp"
+            android:visibility="invisible"/>
+
+        <include layout="@layout/include_layout_att_ok"
+            android:id="@+id/layout_bottom_att_ok"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="bottom"
+            android:layout_margin="12dp"
+            android:visibility="invisible"/>
+
+        <include layout="@layout/include_layout_unknown"
+            android:id="@+id/layout_bottom_unknown"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="bottom"
+            android:layout_margin="12dp"
+            android:visibility="invisible"/>
+
+        <include layout="@layout/include_layout_message"
+            android:id="@+id/layout_bottom_message"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_gravity="bottom"
+            android:layout_margin="12dp"
+            android:visibility="invisible"/>
+
+
+    </eightbitlab.com.blurview.BlurView>
+
+</RelativeLayout>

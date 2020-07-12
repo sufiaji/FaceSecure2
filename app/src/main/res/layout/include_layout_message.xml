@@ -8,16 +8,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/layout_bottom_2"
-        android:layout_marginTop="440dp"
-        android:layout_marginRight="12dp"
-        android:layout_marginLeft="12dp"
+        android:background="@drawable/layout_bottom_3"
         android:orientation="vertical">
         <RelativeLayout
             android:id="@+id/bottom_message_title"
             android:layout_width="match_parent"
             android:layout_height="58dp"
-            android:background="@color/colorPrimary">
+            android:background="@drawable/layout_bottom_1">
             <ImageView
                 android:id="@+id/bottom_message_icon"
                 android:layout_width="32dp"
@@ -54,7 +51,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <com.github.aakira.compoundicontextview.CompoundIconTextView
-                    android:id="@+id/tv_offline"
+                    android:id="@+id/tv_offline_m"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawablePadding="4dp"
@@ -65,7 +62,7 @@
                     app:cit_iconHeight="12dp"
                     app:cit_iconWidth="12dp" />
                 <com.github.aakira.compoundicontextview.CompoundIconTextView
-                    android:id="@+id/tv_online"
+                    android:id="@+id/tv_online_m"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawablePadding="4dp"

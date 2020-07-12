@@ -3,6 +3,8 @@ package com.merkaba.facesecure2.receiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.widget.Toast;
 
 import androidx.core.app.NotificationCompat;
@@ -40,7 +42,15 @@ public class EmailAlarmReceiver extends BroadcastReceiver {
                 @Override
                 public void run() {
                     SendEmailService.getInstance(host, port, sender, receiver, password).SendEmail(subject, content);
-                    DynamicToast.makeSuccess(context, "Email terkirim", Toast.LENGTH_SHORT).show();
+//                    new Handler(Looper.getMainLooper()).post(new Runnable()
+//                    {
+//                        @Override
+//                        public void run()
+//                        {
+//                            DynamicToast.makeSuccess(context, "Email terkirim", Toast.LENGTH_SHORT).show();
+//                        }
+//                    });
+//                    DynamicToast.makeSuccess(context, "Email terkirim", Toast.LENGTH_SHORT).show();
                 }
             });
         } catch (Exception ex) {

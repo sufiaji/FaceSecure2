@@ -10,4 +10,5 @@
     <color name="colorYellowDark">#FF8800</color>
     <color name="colorPurple">#8A2BE2</color>
     <color name="colorBlue">#0080FF</color>
+    <color name="shadowGray">#787878</color>
 </resources>

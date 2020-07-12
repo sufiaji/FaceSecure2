@@ -130,11 +130,11 @@ public class AddActivity extends AppCompatActivity {
     private static final String THREAD_RUN = "running";
 
     private Bitmap mCroppedBitmap = null;
-    private Bitmap mCroppedBitmap2 = null;
+//    private Bitmap mCroppedBitmap2 = null;
     private Bitmap mOriginalBitmap = null;
-    private Bitmap mOriginalBitmap2 = null;
+//    private Bitmap mOriginalBitmap2 = null;
     private HandlerThread mHandlerThreadMain;
-    private String mThreadMainStatus = "NULL";
+//    private String mThreadMainStatus = "NULL";
     private Handler mHandlerMain;
 
 //    private final Interpreter.Options mTfliteOptions = new Interpreter.Options();
@@ -261,7 +261,7 @@ public class AddActivity extends AppCompatActivity {
             mHandlerThreadMain.join();
             mHandlerThreadMain = null;
             mHandlerMain = null;
-            mThreadMainStatus = THREAD_DESTROYED;
+//            mThreadMainStatus = THREAD_DESTROYED;
         } catch (final InterruptedException e) {
             Log.e(TAG, "InterruptedException!");
         }
@@ -271,7 +271,7 @@ public class AddActivity extends AppCompatActivity {
         mHandlerThreadMain = new HandlerThread("inference");
         mHandlerThreadMain.start();
         mHandlerMain = new Handler(mHandlerThreadMain.getLooper());
-        mThreadMainStatus = THREAD_CREATED;
+//        mThreadMainStatus = THREAD_CREATED;
     }
 
     public void onCancelClick(View view) {

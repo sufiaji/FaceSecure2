@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Build;
@@ -64,7 +65,6 @@ import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.ybq.android.spinkit.SpinKitView;
-import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.gson.Gson;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -93,7 +93,6 @@ import com.merkaba.facesecure2.utils.DatabaseHelper;
 import com.merkaba.facesecure2.utils.SendEmailService;
 import com.merkaba.facesecure2.utils.Utils;
 //import com.merkaba.facesecure2.view.BottomSheetFragmentConfirm;
-import com.merkaba.facesecure2.view.BottomSheetFragmentOk;
 import com.merkaba.facesecure2.view.PaintView;
 import com.ornach.nobobutton.NoboButton;
 import com.pixplicity.easyprefs.library.Prefs;
@@ -120,7 +119,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import cz.msebera.android.httpclient.Header;
-import needle.Needle;
+import eightbitlab.com.blurview.BlurView;
+import eightbitlab.com.blurview.RenderScriptBlur;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
@@ -338,7 +338,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         //
         hideNavbar();
         //
-        setContentView(R.layout.activity_main4);
+        setContentView(R.layout.activity_main6);
         mLayoutBlack = findViewById(R.id.layout_black);
         mLayoutBlack.setVisibility(View.GONE);
         mPaintView = findViewById(R.id.paintView);
@@ -400,6 +400,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         //
         mDbHelper = new DatabaseHelper(this);
         //
+        mSupport64bit = true;
         Python python = Python.getInstance();
         try {
             mPyObjectLiveness = python.getModule("liveness").callAttr("LivenessDetection");
@@ -415,6 +416,30 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         broadcastEmailAlarm();
         //
         initScanAnim();
+
+        // init blur code
+        prepareBlurBackground();
+
+    }
+
+    private BlurView mBlurView;
+    private ImageView mImageViewBlur;
+    private void prepareBlurBackground() {
+        float radius = 12f;
+        mBlurView = findViewById(R.id.layoutBlur);
+        mImageViewBlur = findViewById(R.id.image_blur);
+
+        View decorView = getWindow().getDecorView();
+        ViewGroup rootView = (ViewGroup) decorView.findViewById(android.R.id.content);
+        Drawable windowBackground = decorView.getBackground();
+
+        mBlurView.setupWith(rootView)
+                .setFrameClearDrawable(windowBackground)
+                .setBlurAlgorithm(new RenderScriptBlur(this))
+                .setBlurRadius(radius)
+                .setHasFixedTransformationMatrix(true);
+        mBlurView.setVisibility(View.INVISIBLE);
+        mImageViewBlur.setVisibility(View.INVISIBLE);
     }
 
     private int mVolume;
@@ -449,6 +474,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 OUTPUT_DETECTIONS_STREAM_NAME,
                 (packet) -> {
                     if(mIsStart) {
+                        // for blurring background
+                        copyScreen();
+                        drawBitmapBlur();
+                        //
                         List<DetectionProto.Detection> detections = PacketGetter.getProtoVector(packet, DetectionProto.Detection.parser());
                         if (detections.size() > 0) {
                             /**
@@ -459,7 +488,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             float confEx = 0;
                             if(listOfScore.size()>0) {
                                 confEx = listOfScore.get(0);
-                                Log.d(TAG,"confidence face: " + confEx);
+//                                Log.d(TAG,"confidence face: " + confEx);
                                 if(confEx>=0.97f) {
                                     // we have a valid face
                                     mDetectionVector = detections;
@@ -624,9 +653,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 public void run() {
                     mImageScan.setVisibility(View.VISIBLE);
                     mImageScan.requestLayout();
-//                    imageScan.getLayoutParams().height = height;
-//                    imageScan.getLayoutParams().width = width;
-//                    imageScan.setLeft(X);
                     mImageScan.setY(Y);
                     isShowScanner = true;
                 }
@@ -704,7 +730,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void handleMessage(@NonNull Message msg) {
                 switch (msg.what) {
                     case TIMER_OVERFLOW_FD:
-//                        showDebug(">>>>>> TIMER FD Overflow <<<<<<");
                         mFDTimerIsRun = false;
                         if(mFaceLivenessStatus.equalsIgnoreCase("NA")) {
 //                            showDebug("Liveness Process is not finished yet");
@@ -916,6 +941,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        mSpeechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
     }
 
     private void resetSpeechRecognizerUIThread() {
@@ -929,7 +955,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private String mWord = "";
     private void resetSpeechRecognizer() {
-
+        Log.d(TAG, "Reset Speech Recoginzer");
         if(mSpeechRecognizer != null)
             mSpeechRecognizer.destroy();
         mWord = "";
@@ -949,6 +975,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                 @Override
                 public void onRmsChanged(float rmsdB) {
+                    Log.d(TAG, "onRmsChange");
 //                    Log.d()
                 }
 
@@ -959,18 +986,22 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                 @Override
                 public void onEndOfSpeech() {
+                    Log.d(TAG, "onEndOfSpeech" );
                     showDebug("onEndSpeech:");
                     showDebug("CAPTURED WORDS: " + mWord);
                 }
 
                 @Override
                 public void onError(int error) {
+                    mute();
+                    Log.d(TAG, "onError" + Integer.toString(error));
                     resetSpeechRecognizer();
                     startListeningVoiceCommandUIThreadNoSound();
                 }
 
                 @Override
                 public void onResults(Bundle results) {
+                    Log.d(TAG, "onResult");
                     showDebug("SpeechRecognizer: onResults event triggered");
                     ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                     if(matches != null) {
@@ -980,6 +1011,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         }
                         mWord = allMatches;
                         showDebug("CAPTURED WORDS: "+allMatches);
+                        Log.d(TAG, "results: " + allMatches);
                     }
                     //displaying the first match
                     if (matches != null) {
@@ -987,19 +1019,28 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             if(word.contains("clock in")
                                     || word.contains("going in")
                                     || word.contains("login")
-                                    || word.contains("masuk")) {
-                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_IN, mIsOnline, mCroppedBitmap);
+                                    || word.contains("masuk")
+                                    || word.contains("bakso")
+                                    || word.contains("in")) {
+                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_IN, mIsOnline, /*mCroppedBitmap*/ mBitmapBig);
                                 break;
                             } else if(word.contains("clock out") ||
                                     word.contains("logout") ||
                                     word.contains("luar") ||
                                     word.contains("going out") ||
-                                    word.contains("keluar")) {
-                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_OUT, mIsOnline, mCroppedBitmap);
+                                    word.contains("keluar") ||
+                                    word.contains("out") ||
+                                    word.contains("om") ||
+                                    word.contains("south") ||
+                                    word.contains("oud") ||
+                                    word.contains("ot") ||
+                                    word.contains("aut") ||
+                                    word.contains("both")) {
+                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_OUT, mIsOnline, /*mCroppedBitmap*/ mBitmapBig);
                                 break;
                             } else if(word.contains("batal") ||
                                         word.contains("cancel")) {
-                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_CANCEL, mIsOnline, mCroppedBitmap);
+//                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_CANCEL, mIsOnline, mCroppedBitmap);
                                 break;
                             }
                         }
@@ -1008,7 +1049,39 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                 @Override
                 public void onPartialResults(Bundle partialResults) {
+                    ArrayList data = partialResults.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    if(data==null) return;
+                    String word = (String) data.get(data.size() - 1);
+                    showDebug("partial_results: " + word);
+//                    recognisedText.setText(word);
+                    Log.d(TAG, "partial_results: " + word);
+                    //
+                    if(word.contains("clock in")
+                            || word.contains("going in")
+                            || word.contains("login")
+                            || word.contains("masuk")
+                            || word.contains("in")) {
+                        onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_IN, mIsOnline, /*mCroppedBitmap*/ mBitmapBig);
 
+                    } else if(word.contains("clock out") ||
+                            word.contains("logout") ||
+                            word.contains("luar") ||
+                            word.contains("going out") ||
+                            word.contains("keluar") ||
+                            word.contains("out") ||
+                            word.contains("om") ||
+                            word.contains("south") ||
+                            word.contains("oud") ||
+                            word.contains("ot") ||
+                            word.contains("aut") ||
+                            word.contains("both")) {
+                        onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_OUT, mIsOnline, /*mCroppedBitmap*/ mBitmapBig);
+
+                    } else if(word.contains("batal") ||
+                            word.contains("cancel")) {
+//                                onBottomSheetButtonClick(mUserIdPostAttendance, mUsernamePostAttendance, STRING_CLOCK_CANCEL, mIsOnline, mCroppedBitmap);
+
+                    }
                 }
 
                 @Override
@@ -1090,7 +1163,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         if(mTextToSpeech!=null) {
-            mTextToSpeech.setSpeechRate(2.0f);
+            mTextToSpeech.setSpeechRate(1.8f);
         }
     }
 
@@ -1149,9 +1222,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void onStartClick() {
-//        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.aji_thumb1);
-//        displayBottomAttendanceConfirm("11111111", "Aji", bitmap, true);
-//        testdisplay();
+
         if(mIsStart)
             stopProgram();
         else
@@ -1168,12 +1239,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void assignFabListener() {
         mFabMenu = findViewById(R.id.fab_menu);
+        mFabMenu.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+//                if(!mFabMenu.isOpened())
+//                    showBlurBackground();
+            }
+        });
         //
         fabStart = findViewById(R.id.fab_start);
         fabStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mFabMenu.close(false);
+//                hideBlurBackground();
                 onStartClick();
 //                testdisplay();
             }
@@ -1185,6 +1264,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void onClick(View v) {
                 // TODO: 10/05/2020 set disable when click and enable when finished
                 mFabMenu.close(false);
+//                hideBlurBackground();
                 onAddUser();
             }
         });
@@ -1481,6 +1561,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         dialog.show();
@@ -1598,7 +1679,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             if (mAutoMode) {
                 autoModeOffline(userMatch, name, croppedBitmap);
             } else {
-                manualMode(userMatch, name, croppedBitmap, false);
+                mBitmapBig2 = mBitmapBig;
+                manualMode(userMatch, name, /*croppedBitmap*/mBitmapBig, false);
             }
         } else {
             /**
@@ -1614,6 +1696,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         }
     }
 
+    private Bitmap mBitmapBig2;
     private void predictOnline(final Bitmap croppedBitmap) {
         Log.d(TAG, "Entering Predict online");
         showDebug("Entering Predict online");
@@ -1698,9 +1781,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             mUsernamePostAttendance = firstName;
                             mUserIdPostAttendance = firstUserid;
                             if (mAutoMode) {
-                                autoModeOnline(firstUserid, firstName, croppedBitmap);
+                                autoModeOnline(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig);
                             } else {
-                                manualMode(firstUserid, firstName, croppedBitmap, true);
+                                mBitmapBig2 = mBitmapBig;
+                                manualMode(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig, true);
                             }
                         } else {
                             /**
@@ -1764,9 +1848,47 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         // no need to check last record IN/OUT because user is requested to provide the IN/OUT
         hideScanAnim();
 //        playDing();
-//        playDingAndStartListening();
-        displayBottomAttendanceConfirmUIThread(userId, name, /*mCroppedBitmap*/mBitmapBig, online);
+        displayBottomAttendanceConfirmUIThread(userId, name, croppedBitmap, online); //mBitmapBig, online);
+        showBlurBackground();
         startListeningVoiceCommandUIThread();
+    }
+
+    private boolean requestBlurBackground = false;
+    private void showBlurBackground() {
+        requestBlurBackground = true;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mImageViewBlur.setImageBitmap(mBitmapScreen);
+                mImageViewBlur.setVisibility(View.VISIBLE);
+                mBlurView.setVisibility(View.VISIBLE);
+
+            }
+        });
+
+    }
+
+    private void hideBlurBackground() {
+        requestBlurBackground = false;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mImageViewBlur.setVisibility(View.INVISIBLE);
+                mBlurView.setVisibility(View.INVISIBLE);
+            }
+        });
+    }
+
+    private void drawBitmapBlur() {
+        if(requestBlurBackground && mBitmapScreen!=null) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mImageViewBlur.setImageBitmap(mBitmapScreen);
+                }
+            });
+
+        }
     }
 
     private String mUserIdPostAttendance;
@@ -1812,6 +1934,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                    mute();
                     mSpeechRecognizer.startListening(mSpeechRecognizerIntent);
                     showDebug("Start listening called");
+                    //
+
                 }
             });
         }
@@ -1819,7 +1943,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private SpinKitView mProgressVoice;
 
+
+
     private void stopListeningVoiceCommand() {
+
         if(mVoiceCommand) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -1827,6 +1954,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     unMute();
                     mSpeechRecognizer.stopListening();
                     showDebug("Stop listening called");
+                    //
+
                 }
             });
         }
@@ -1837,7 +1966,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void speakGoodbye(String name) {
-        speakFeedback("Sampai jumpa lagi " + name);
+        speakFeedback("Sampai jumpa " + name);
     }
 
     private void speakNoProcess() {
@@ -1862,7 +1991,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if(lastAttendance==null) {
             // this is the first time this guy doing attendance
             insertAttendance(attendanceIn);
-            displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
+            showBlurBackground();
+            displayBottomAttendanceOkUIThread(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
             speakWelcome(name);
             hideProgressSpinKit();
             hideScanAnim();
@@ -1910,14 +2040,16 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 if (lastAttendance.getStatus().equalsIgnoreCase(STRING_CLOCK_IN)) {
                     // do clock out
                     insertAttendance(attendanceOut);
-                    displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_OUT, false);
+                    showBlurBackground();
+                    displayBottomAttendanceOkUIThread(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_OUT, false);
                     hideProgressSpinKit();
                     hideScanAnim();
                     speakGoodbye(name);
                 } else {
                     // do clock in
                     insertAttendance(attendanceIn);
-                    displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
+                    showBlurBackground();
+                    displayBottomAttendanceOkUIThread(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, false);
                     hideProgressSpinKit();
                     hideScanAnim();
                     speakWelcome(name);
@@ -2001,7 +2133,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 hideScanAnim();
                                 speakNoProcess();
 
-
                             } else {
                                 // more than AutoTimeout
                                 if (status.equalsIgnoreCase(STRING_CLOCK_IN)) {
@@ -2036,7 +2167,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mLocation = "00";
     private void postAttendanceOnline(final String userId, String name, final String status, final Bitmap croppedBitmap) {
         showDebug("Post attendance data: " + status);
-//        showTextProgress("Post attendance data: " + status);
         showTextProgress("Menyimpan data kehadiran ke database");
         // current date/time
         String createdAt = new DateUtils("-").getCurrentDate();
@@ -2069,12 +2199,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     String resultName = jo.getString("name");
                     String resultUserid = jo.getString("user_id");
                     String resultStatus = jo.getString("status");
+                    showBlurBackground();
                     if (resultStatus.equalsIgnoreCase(STRING_CLOCK_IN)) {
-                        displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_IN, true);
-                        speakFeedback("Selamat datang, " + resultName);
+                        displayBottomAttendanceOkUIThread(mBitmapBig, name, userId, STRING_CLOCK_IN, true);
+                        speakWelcome(resultName);
                     } else {
-                        displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, STRING_CLOCK_OUT, true);
-                        speakFeedback("Sampai jumpa, " + resultName);
+                        displayBottomAttendanceOkUIThread(mBitmapBig, name, userId, STRING_CLOCK_OUT, true);
+                        speakGoodbye(resultName);
                     }
 
                 } catch (JSONException e) {
@@ -2091,7 +2222,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 Attendance attendance = new Attendance(userId, createdDateTime, status, mLocation, croppedBitmap, "X");
                 insertAttendance(attendance);
-                displayBottomAttendanceOk(/*mCroppedBitmap*/mBitmapBig, name, userId, status, false);
+                showBlurBackground();
+                displayBottomAttendanceOkUIThread(mBitmapBig, name, userId, status, false);
                 String er = error.toString();
                 showDebug("Error: postAttendance-onFailure-status=" + statusCode + ",error=" + er);
                 hideProgressSpinKit();
@@ -2099,6 +2231,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 hideScanAnim();
             }
 
+        });
+    }
+
+    private void displayBottomAttendanceOkUIThread(Bitmap face, String name, String nik, String atType, boolean online) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                displayBottomAttendanceOk(face, name, nik, atType, online);
+            }
         });
     }
 
@@ -2255,6 +2396,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 }
 
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         NoboButton btnCancel = dialogView.findViewById(R.id.btn_voice_cancel);
@@ -2262,6 +2404,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         dialog.show();
@@ -2293,12 +2436,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     public void onTextInputConfirmed(String text) {
                         mLocation = text;
                         Prefs.putString(PREF_TERMINAL_LOCATION, mLocation);
+//                        hideBlurBackground();
                     }
                 })
                 .setNegativeButton("Batal", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-
+//                        hideBlurBackground();
                     }
                 })
                 .show();
@@ -2358,6 +2502,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 else
                     hideDebugListView();
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
 
@@ -2365,6 +2510,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         dialog.show();
@@ -2456,7 +2602,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
         // get the layout of attendance confirmation
         showDebug("Display Attendance confirmation");
-        RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm);
+        RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm_c);
         TextView textCountdown = findViewById(R.id.text_counter);
 
         // the countdown
@@ -2472,29 +2618,30 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
 
         // set name and nik
-        TextView textViewName = findViewById(R.id.tv_name);
+        TextView textViewName = findViewById(R.id.tv_name_c);
         textViewName.setText(name);
-        TextView textViewId = findViewById(R.id.tv_nik);
+        TextView textViewId = findViewById(R.id.tv_nik_c);
         textViewId.setText(nik);
-        CircleImage ci = findViewById(R.id.iv_thumb);
+        // face
+        CircleImage ci = findViewById(R.id.iv_thumb_c);
         ci.setImageBitmap(face);
 
         // set date and time
-        TextView textViewDate = findViewById(R.id.tv_date);
+        TextView textViewDate = findViewById(R.id.tv_date_c);
         DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
         Date d = new Date();
         String formattedCurrentDate = df.format(d);
         SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
         String dayOfTheWeek = sdf.format(d);
         textViewDate.setText(dayOfTheWeek + ", " + formattedCurrentDate);
-        TextView textViewTime = findViewById(R.id.tv_time);
+        TextView textViewTime = findViewById(R.id.tv_time_c);
         SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
         String textTime = sdft.format(d);
         textViewTime.setText(textTime + " WIB");
 
         // set online/offline
-        CompoundIconTextView textViewOffline = findViewById(R.id.tv_offline);
-        CompoundIconTextView textViewOnline = findViewById(R.id.tv_online);
+        CompoundIconTextView textViewOffline = findViewById(R.id.tv_offline_c);
+        CompoundIconTextView textViewOnline = findViewById(R.id.tv_online_c);
         textViewOffline.setVisibility(View.GONE);
         textViewOnline.setVisibility(View.GONE);
         if(online) {
@@ -2511,31 +2658,19 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         // start countdown
         mCountDownAnimation.start();
 
-        // button callback
-        Button btnCancel = findViewById(R.id.btn_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onBottomSheetButtonClick(nik, name, STRING_CLOCK_CANCEL, online, face);
-
-            }
-        });
-
-        Button btnClockin = findViewById(R.id.btn_clockin);
+        ImageView btnClockin = findViewById(R.id.image_clock_in);
         btnClockin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 onBottomSheetButtonClick(nik, name, STRING_CLOCK_IN, online, face);
-//                dismissAttendanceConfirm();
             }
         });
 
-        Button btnClockout = findViewById(R.id.btn_clockout);
+        ImageView btnClockout = findViewById(R.id.image_clock_out);
         btnClockout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 onBottomSheetButtonClick(nik, name, STRING_CLOCK_OUT, online, face);
-//                dismissAttendanceConfirm();
             }
         });
     }
@@ -2550,7 +2685,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm);
+                RelativeLayout layoutAttendanceConfirm = findViewById(R.id.layout_bottom_att_confirm_c);
                 YoYo.with(Techniques.SlideOutDown)
                         .duration(500)
                         .playOn(layoutAttendanceConfirm);
@@ -2589,68 +2724,24 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             });
         } else if(aType.equalsIgnoreCase(STRING_CLOCK_CANCEL)) {
             LottieDrawable lottieDrawable = new LottieDrawable();
-            lottieDrawable.setMaxFrame(30);
-            lottieDrawable.setMinFrame(0);
+//            lottieDrawable.setMaxFrame(30);
+//            lottieDrawable.setMinFrame(0);
             lottieDrawable.setSpeed(0.5f);
             ImageView imageAnim = findViewById(R.id.image_lottie);
             imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
             imageAnim.setImageDrawable(lottieDrawable);
-            LottieComposition.Factory.fromAssetFileName(mContext, "anim_cancel.json", (composition) -> {
+            LottieComposition.Factory.fromAssetFileName(mContext, "anim_cancel2.json", (composition) -> {
                 lottieDrawable.setComposition(composition);
-                lottieDrawable.loop(false);
+                lottieDrawable.loop(true);
                 lottieDrawable.playAnimation();
             });
         }
         // layout
         LinearLayout layoutAttendanceOk = findViewById(R.id.layout_bottom_att_ok);
         layoutAttendanceOk.setVisibility(View.VISIBLE);
+        //
         YoYo.with(Techniques.SlideInUp)
                 .duration(500)
-                .onEnd(new YoYo.AnimatorCallback() {
-                    @Override
-                    public void call(Animator animator) {
-//                        if(aType.equalsIgnoreCase(STRING_CLOCK_OUT)) {
-//                            LottieDrawable lottieDrawable = new LottieDrawable();
-//                            lottieDrawable.setMaxFrame(60);
-//                            lottieDrawable.setMinFrame(30);
-//                            lottieDrawable.setSpeed(0.5f);
-//                            ImageView imageAnim = findViewById(R.id.image_lottie);
-//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//                            imageAnim.setImageDrawable(lottieDrawable);
-//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
-//                                lottieDrawable.setComposition(composition);
-//                                lottieDrawable.loop(false);
-//                                lottieDrawable.playAnimation();
-//                            });
-//                        } else if(aType.equalsIgnoreCase(STRING_CLOCK_IN)) {
-//                            LottieDrawable lottieDrawable = new LottieDrawable();
-//                            lottieDrawable.setMaxFrame(30);
-//                            lottieDrawable.setMinFrame(0);
-//                            lottieDrawable.setSpeed(0.5f);
-//                            ImageView imageAnim = findViewById(R.id.image_lottie);
-//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//                            imageAnim.setImageDrawable(lottieDrawable);
-//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_clock_in_out.json", (composition) -> {
-//                                lottieDrawable.setComposition(composition);
-//                                lottieDrawable.loop(false);
-//                                lottieDrawable.playAnimation();
-//                            });
-//                        } else if(aType.equalsIgnoreCase(STRING_CLOCK_CANCEL)) {
-//                            LottieDrawable lottieDrawable = new LottieDrawable();
-//                            lottieDrawable.setMaxFrame(30);
-//                            lottieDrawable.setMinFrame(0);
-//                            lottieDrawable.setSpeed(0.5f);
-//                            ImageView imageAnim = findViewById(R.id.image_lottie);
-//                            imageAnim.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//                            imageAnim.setImageDrawable(lottieDrawable);
-//                            LottieComposition.Factory.fromAssetFileName(mContext, "anim_cancel.json", (composition) -> {
-//                                lottieDrawable.setComposition(composition);
-//                                lottieDrawable.loop(false);
-//                                lottieDrawable.playAnimation();
-//                            });
-//                        }
-                    }
-                })
                 .playOn(layoutAttendanceOk);
 
         TextView tvName = findViewById(R.id.tv_name);
@@ -2677,8 +2768,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
         String textTime = sdft.format(d);
         textViewTime.setText(textTime + " WIB");
+        //
         CircleImage ci = findViewById(R.id.iv_thumb);
-        ci.setImageBitmap(face);
+        if(mAutoMode)
+            ci.setImageBitmap(face);
+        else
+            ci.setImageBitmap(mBitmapBig2);
 
         final Handler handler  = new Handler();
         final Runnable runnable = new Runnable() {
@@ -2689,6 +2784,27 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     public void run() {
                         YoYo.with(Techniques.SlideOutDown)
                                 .duration(500)
+                                .withListener(new Animator.AnimatorListener() {
+                                    @Override
+                                    public void onAnimationStart(Animator animator) {
+
+                                    }
+
+                                    @Override
+                                    public void onAnimationEnd(Animator animator) {
+                                        hideBlurBackground();
+                                    }
+
+                                    @Override
+                                    public void onAnimationCancel(Animator animator) {
+
+                                    }
+
+                                    @Override
+                                    public void onAnimationRepeat(Animator animator) {
+
+                                    }
+                                })
                                 .playOn(layoutAttendanceOk);
                         delayedFinishProcessFlag();
                     }
@@ -2698,48 +2814,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         handler.postDelayed(runnable, 4000);
     }
 
-//    private BottomSheetFragmentConfirm mDialogAttendanceConfirm;
-//    public void displayBottomAttendanceConfirm2(String nik, String name, Bitmap face, boolean online) {
-//        mDialogAttendanceConfirm = new BottomSheetFragmentConfirm();
-//        mDialogAttendanceConfirm.setCancelable(false);
-//        Bundle bundle = new Bundle();
-//        bundle.putString(ARGS_ID, nik);
-//        bundle.putByteArray(ARGS_BITMAP, Utils.getBitmapAsByteArray(face));
-//        bundle.putInt(ARGS_TIMER_WAITING_VOICE_COMMAND, mVoiceCommandWaitingTimer);
-//        bundle.putBoolean(ARGS_ONLINE_STATUS, online);
-//        bundle.putString(ARGS_NICKNAME, name);
-//        mDialogAttendanceConfirm.setArguments(bundle);
-//        mDialogAttendanceConfirm.show(getSupportFragmentManager(), "Attendance Confirm");
-//    }
-
-    private void displayBottomAttendanceOk2(Bitmap face, String name, String nik, String aType, boolean online) {
-        BottomSheetFragmentOk dialog = new BottomSheetFragmentOk();
-        dialog.setCancelable(false);
-        Bundle bundle = new Bundle();
-        bundle.putByteArray(ARGS_BITMAP, Utils.getBitmapAsByteArray(face));
-        bundle.putString(ARGS_ATYPE, aType);
-        bundle.putString(ARGS_ID, nik);
-        bundle.putString(ARGS_NICKNAME, name);
-        bundle.putBoolean(ARGS_ONLINE_STATUS, online);
-        dialog.setArguments(bundle);
-        dialog.show(getSupportFragmentManager(), "Attendance Ok");
-        final Handler handler  = new Handler();
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (dialog!=null) {
-                    dialog.dismiss();
-                    delayedFinishProcessFlag();
-                }
-            }
-        };
-        handler.postDelayed(runnable, 4000);
-    }
-
     private void onBottomSheetButtonClick(String userId, String name,
                                          String attType, boolean online, Bitmap face) {
-        dismissAttendanceConfirm();
+//        hideBlurBackground();
         stopListeningVoiceCommand();
+        dismissAttendanceConfirm();
+
         resetSpeechRecognizerUIThread();
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
@@ -2747,8 +2827,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if(attType.equals(STRING_CLOCK_CANCEL)) {
 //            mIsProcessing = false;
             hideProgressSpinKit();
-            displayBottomMessageSuccess("Dibatalkan, data kehadiran tidak diproses.");
-            speakFeedback("Dibatalkan, terima kasih.");
+            displayBottomAttendanceOk(face, name, userId, attType, online);
+            speakFeedback("Dibatalkan.");
         } else if(attType.equals(STRING_CLOCK_IN)) {
             if(online) {
 //                showDebug("IN clicked on offline mode");
@@ -2762,8 +2842,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                mIsProcessing = false;
                 hideProgressSpinKit();
                 hideTextProgress();
-                speakFeedback("Selamat datang, " + name);
-                displayBottomAttendanceOk(/*face*/mBitmapBig, name, userId, attType, false);
+//                speakFeedback("Selamat datang, " + name);
+                speakWelcome(name);
+                displayBottomAttendanceOk(/*face*/face, name, userId, attType, false);
             }
         } else if(attType.equals(STRING_CLOCK_OUT)) {
             if(online) {
@@ -2777,8 +2858,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                mIsProcessing = false;
                 hideProgressSpinKit();
                 hideTextProgress();
-                speakFeedback("Sampai jumpa, " + name);
-                displayBottomAttendanceOk(/*face*/mBitmapBig, name, userId, attType, false);
+//                speakFeedback("Sampai jumpa, " + name);
+                speakGoodbye(name);
+                displayBottomAttendanceOk(/*face*/face, name, userId, attType, false);
             }
         }
     }
@@ -2786,8 +2868,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public void onAttendanceConfirmCounterEnd() {
         stopListeningVoiceCommand();
         resetSpeechRecognizerUIThread();
+//        hideBlurBackground();
         displayBottomMessageSuccess("Tidak ada respon, data kehadiran tidak diproses.");
-        speakFeedback("Dibatalkan, terima kasih.");
+        speakFeedback("Dibatalkan.");
         hideProgressSpinKit();
     }
 
@@ -2809,42 +2892,61 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         RelativeLayout relativeLayout;
         TextView tvMsg = findViewById(R.id.bottom_message_content);
         tvMsg.setText(message);
-        CompoundIconTextView tvOnline = findViewById(R.id.tv_online);
-        CompoundIconTextView tvOffline = findViewById(R.id.tv_offline);
-        if(mIsOnline) {
-            tvOnline.setVisibility(View.VISIBLE);
-            tvOffline.setVisibility(View.GONE);
-        } else {
-            tvOffline.setVisibility(View.VISIBLE);
-            tvOnline.setVisibility(View.GONE);
-        }
+
         if(type.equalsIgnoreCase(MainActivity.MESSAGE_PERSON_UNKNOWN)) {
+
             relativeLayout = findViewById(R.id.layout_bottom_unknown);
+            CompoundIconTextView tvOnline = findViewById(R.id.tv_online_u);
+            CompoundIconTextView tvOffline = findViewById(R.id.tv_offline_u);
+            if(mIsOnline) {
+                tvOnline.setVisibility(View.VISIBLE);
+                tvOffline.setVisibility(View.GONE);
+            } else {
+                tvOffline.setVisibility(View.VISIBLE);
+                tvOnline.setVisibility(View.GONE);
+            }
 
         } else {
+            CompoundIconTextView tvOnline = findViewById(R.id.tv_online_m);
+            CompoundIconTextView tvOffline = findViewById(R.id.tv_offline_m);
+            if(mIsOnline) {
+                tvOnline.setVisibility(View.VISIBLE);
+                tvOffline.setVisibility(View.GONE);
+            } else {
+                tvOffline.setVisibility(View.VISIBLE);
+                tvOnline.setVisibility(View.GONE);
+            }
+
             relativeLayout = findViewById(R.id.layout_bottom_message);
             RelativeLayout titleLayout = findViewById(R.id.bottom_message_title);
             ImageView ivIcon = findViewById(R.id.bottom_message_icon);
+            TextView msgContent = findViewById(R.id.bottom_message_content);
+            msgContent.setText(message);
 
             if (type.equalsIgnoreCase(MainActivity.MESSAGE_ERROR)) {
-                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorRed));
+//                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorRed));
+                titleLayout.setBackground(getDrawable(R.drawable.layout_title_error));
                 ivIcon.setImageResource(R.drawable.ic_error);
             } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_INFO)) {
-                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorBlue));
+//                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorBlue));
+                titleLayout.setBackground(getDrawable(R.drawable.layout_title_info));
                 ivIcon.setImageResource(R.drawable.ic_about);
             } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_SUCCESS)) {
-                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+//                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
+                titleLayout.setBackground(getDrawable(R.drawable.layout_title_success));
                 ivIcon.setImageResource(R.drawable.ic_ok);
             } else if (type.equalsIgnoreCase(MainActivity.MESSAGE_WARNING)) {
-                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorYellowDark));
+//                titleLayout.setBackgroundColor(getResources().getColor(R.color.colorYellowDark));
+                titleLayout.setBackground(getDrawable(R.drawable.layout_title_warning));
                 ivIcon.setImageResource(R.drawable.ic_warning);
             }
         }
 
+        showBlurBackground();
         relativeLayout.setVisibility(View.VISIBLE);
 
         YoYo.with(Techniques.SlideInUp)
-                .duration(700)
+                .duration(500)
                 .playOn(relativeLayout);
 
         Handler handler = new Handler();
@@ -2852,86 +2954,36 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void run() {
                 YoYo.with(Techniques.SlideOutDown)
-                        .duration(700)
+                        .duration(500)
+                        .withListener(new Animator.AnimatorListener() {
+                            @Override
+                            public void onAnimationStart(Animator animator) {
+
+                            }
+
+                            @Override
+                            public void onAnimationEnd(Animator animator) {
+                                hideBlurBackground();
+                            }
+
+                            @Override
+                            public void onAnimationCancel(Animator animator) {
+
+                            }
+
+                            @Override
+                            public void onAnimationRepeat(Animator animator) {
+
+                            }
+                        })
                         .playOn(relativeLayout)
                         ;
                 delayedFinishProcessFlag();
             }
         };
-        handler.postDelayed(runnable, 3000);
+        handler.postDelayed(runnable, 4000);
 
     }
-
-    private void displayBottomMessage2(String type, String message) {
-        final BottomSheetDialog dialog = new BottomSheetDialog(mContext);
-        dialog.setContentView(R.layout.bottom_message);
-        RelativeLayout relativeLayout = dialog.findViewById(R.id.bottom_message_title);
-        ImageView imageView = dialog.findViewById(R.id.bottom_message_icon);
-        TextView textView = dialog.findViewById(R.id.bottom_message_content);
-        dialog.setCancelable(true);
-        textView.setText(message);
-
-        if(type.equalsIgnoreCase("success")) {
-            relativeLayout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-            imageView.setImageResource(R.drawable.ic_ok);
-        } else if(type.equalsIgnoreCase("warning")) {
-            relativeLayout.setBackgroundColor(getResources().getColor(R.color.colorYellowDark));
-            imageView.setImageResource(R.drawable.ic_warning);
-        } else if(type.equalsIgnoreCase("info")) {
-            relativeLayout.setBackgroundColor(getResources().getColor(R.color.colorPrimary));
-            imageView.setImageResource(R.drawable.ic_about);
-        } else {
-            relativeLayout.setBackgroundColor(getResources().getColor(R.color.colorRed));
-            imageView.setImageResource(R.drawable.ic_error);
-        }
-        dialog.show();
-        final Handler handler  = new Handler();
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (dialog.isShowing()) {
-                    dialog.dismiss();
-                }
-            }
-        };
-
-        dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
-            @Override
-            public void onDismiss(DialogInterface dialog) {
-                handler.removeCallbacks(runnable);
-                delayedFinishProcessFlag();
-            }
-        });
-        handler.postDelayed(runnable, 3000);
-    }
-
-//    private void hideScanFrame() {
-//        if(mDialogScanner==null) return;
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                mDialogScanner.dismiss();
-//            }
-//        });
-//    }
-//
-//    private Dialog mDialogScanner;
-//    private void displayScanFrame() {
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                mDialogScanner = new Dialog(mContext, R.style.DialogTheme);
-//                LayoutInflater inflater = getLayoutInflater();
-//                View dialogView = inflater.inflate(R.layout.dialog_scan, null);
-//                mDialogScanner.setContentView(dialogView);
-//                Window window = mDialogScanner.getWindow();
-//                window.setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
-//                window.setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-//                mDialogScanner.show();
-//            }
-//        });
-//
-//    }
 
     private void onEmailClick() {
         final AlertDialog dialog = new AlertDialog.Builder(this).create();
@@ -3012,9 +3064,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 Prefs.putString(PREF_SMTP_EMAIL_SEND_TIME, mSmtpEmailTime);
                 Prefs.putBoolean(PREF_SEND_MAIL, mSendMail);
 
-                broadcastEmailAlarm();
+                if(ckMail.isChecked()) {
+                    cancelBroadcastEmailAlarm();
+                    broadcastEmailAlarm();
+                } else
+                    cancelBroadcastEmailAlarm();
 
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         NoboButton btnCancel = dialogView.findViewById(R.id.btn_email_cancel);
@@ -3022,6 +3079,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         DateUtils dateUtils = new DateUtils("/");
@@ -3041,6 +3099,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 else {
                     displayToastSuccess("Email terkirim");
                     dialog.dismiss();
+//                    hideBlurBackground();
                 }
             }
         });
@@ -3050,23 +3109,37 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         dialog.show();
     }
 
+    private PendingIntent mAlarmIntent;
+    private AlarmManager mAlarmManager;
     private void broadcastEmailAlarm() {
-        Calendar calendar = Calendar.getInstance();
+
         int hour = Integer.parseInt(mSmtpEmailTime.split(":")[0]);
         int min = Integer.parseInt(mSmtpEmailTime.split(":")[1]);
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.HOUR_OF_DAY, hour);
         calendar.set(Calendar.MINUTE, min);
-        calendar.set(Calendar.SECOND, 0);
-        Intent intent = new Intent(MainActivity.this, EmailAlarmReceiver.class);
+//        calendar.set(Calendar.SECOND, 0);
+
+        Intent intent = new Intent(mContext, EmailAlarmReceiver.class);
         intent.putExtra(PREF_SMTP_HOST, mSmtpHost);
         intent.putExtra(PREF_SMTP_PORT, mSmtpPort);
         intent.putExtra(PREF_SMTP_SENDER_USER, mSmtpSender);
         intent.putExtra(PREF_SMTP_RECEIVER_USER, mSmtpReceiver);
         intent.putExtra(PREF_SMTP_SENDER_PASSWORD, mSmtpPassword);
         intent.putExtra(PREF_SEND_MAIL, mSendMail);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0,intent, PendingIntent.FLAG_UPDATE_CURRENT);
-        AlarmManager alarmManager = (AlarmManager) MainActivity.this.getSystemService(MainActivity.this.ALARM_SERVICE);
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pendingIntent);
+        mAlarmIntent = PendingIntent.getBroadcast(mContext, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT);
+        mAlarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
+
+        mAlarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), AlarmManager.INTERVAL_DAY, mAlarmIntent);
+    }
+
+    private void cancelBroadcastEmailAlarm() {
+        if(mAlarmManager!=null) {
+            mAlarmIntent.cancel();
+            mAlarmManager.cancel(mAlarmIntent);
+        }
     }
 
     private boolean sendMail(String fromDate, String toDate) {
@@ -3149,6 +3222,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         startSyncTimer();
                         displayToastSuccess("Pengaturan berhasil disimpan");
                         dialog.dismiss();
+                        hideBlurBackground();
                         hideProgressSpinKit();
                     }
 
@@ -3166,12 +3240,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void onClick(View v) {
                 syncNow();
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         dialog.setView(dialogView);
@@ -3199,6 +3275,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         ckBB.setChecked(Prefs.getBoolean(PREF_DRAW_BOUNDINGBOX, true));
         CheckBox ckLiveness = dialogView.findViewById(R.id.ck_liveness);
         ckLiveness.setChecked(Prefs.getBoolean(PREF_LIVENESS_MANDATORY, true));
+        // by default, if it is 64Bit device, Liveness is mandatory
+        if(mSupport64bit) ckLiveness.setVisibility(View.GONE);
         EditText edtStandbyTimeout = dialogView.findViewById(R.id.edt_standby_timeout);
         edtStandbyTimeout.setText(Integer.toString(mStandbyTimeout));
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -3218,12 +3296,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 Prefs.putBoolean(PREF_LIVENESS_MANDATORY, mLivenessIsMandatory);
                 if(!mFlagDrawBoundingBox) clearBB();
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 dialog.dismiss();
+//                hideBlurBackground();
             }
         });
         dialog.show();
@@ -3464,6 +3544,28 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
+    private Bitmap mBitmapScreen = null;
+    private Bitmap mBitmapCopy = null;
+    private void copyScreen() {
+        if(mPreviewDisplayView==null) return;
+        if(!mIsProcessing) return;
+        float previewWidth = (float) mPreviewDisplayView.getWidth();
+        float previewHeight = (float) mPreviewDisplayView.getHeight();
+        // copy Bitmap
+        mBitmapCopy = Bitmap.createBitmap(
+                (int)previewWidth,
+                (int)previewHeight,
+                Bitmap.Config.ARGB_8888);
+        final HandlerThread handlerThread = new HandlerThread("PixelCopier");
+        handlerThread.start();
+        PixelCopy.request(mPreviewDisplayView, mBitmapCopy, new PixelCopy.OnPixelCopyFinishedListener() {
+            @Override
+            public void onPixelCopyFinished(int i) {
+                mBitmapScreen = mBitmapCopy;
+            }
+        }, new Handler(handlerThread.getLooper()));
+    }
+
     private PaintView mPaintView;
     private boolean mFlagBoundingBoxProcessIsFinished = true;
     private boolean mFaceInArea = false;
@@ -3489,6 +3591,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private boolean mRequestLiveness = false;
     private Bitmap mBitmapBig;
     private void evaluateFace(DetectionProto.Detection detection) {
+        if(mPreviewDisplayView==null) return;
         float previewWidth = (float) mPreviewDisplayView.getWidth();
         float previewHeight = (float) mPreviewDisplayView.getHeight();
         //

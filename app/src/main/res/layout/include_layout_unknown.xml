@@ -11,13 +11,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/layout_bottom_unknown"
-        android:layout_marginTop="580dp"
-        android:layout_marginRight="12dp"
-        android:layout_marginLeft="12dp"
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/bottom_message_content"
+            android:id="@+id/bottom_message_content_unknown"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="TIDAK DIKENAL"
@@ -43,7 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
                 <com.github.aakira.compoundicontextview.CompoundIconTextView
-                    android:id="@+id/tv_offline"
+                    android:id="@+id/tv_offline_u"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawablePadding="4dp"
@@ -54,7 +51,7 @@
                     app:cit_iconHeight="12dp"
                     app:cit_iconWidth="12dp" />
                 <com.github.aakira.compoundicontextview.CompoundIconTextView
-                    android:id="@+id/tv_online"
+                    android:id="@+id/tv_online_u"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:drawablePadding="4dp"

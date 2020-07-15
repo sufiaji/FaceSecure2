@@ -280,8 +280,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private boolean mIsStart = false;
     private boolean mPreviousStartStatus = false;
     private boolean mAutoMode = true;
-    private boolean mVoiceFeedback = false;
-    private boolean mVoiceCommand = false;
+    private boolean mVoiceFeedback = true;
+    private boolean mVoiceCommand = true;
     private boolean mFDTimerIsRun = false;
     private boolean mStandbyTimerIsRun = false;
     private String mFaceLivenessStatus = "NA"; // fake, real/na
@@ -363,7 +363,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mAutoMode = Prefs.getBoolean(PREF_AUTO_MODE, true);
         mAutoTimeoutMinutes = Prefs.getInt(PREF_AUTO_TIMEOUT_MINUTE, 59); // minutes
         mAutoTimeoutHours = Prefs.getInt(PREF_AUTO_TIMEOUT_HOUR, 0);
-        mVoiceCommand = Prefs.getBoolean(PREF_VCOMMAND, false);
+        mVoiceCommand = Prefs.getBoolean(PREF_VCOMMAND, true);
         mVoiceFeedback = Prefs.getBoolean(PREF_VFEEDBACK, true);
         mThresholdDistanceFaceEmbedding = Prefs.getFloat(PREF_THRESHOLD_FACE_DISTANCE, 0.5f);
         mThresholdLiveness = Prefs.getFloat(PREF_THRESHOLD_LIVENESS, 0.1f);

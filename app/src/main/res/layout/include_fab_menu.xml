@@ -21,6 +21,14 @@
         fab:menu_colorPressed="@color/colorPrimary"
         fab:menu_colorRipple="@color/colorAccent">
 
+<!--        <com.github.clans.fab.FloatingActionButton-->
+<!--            android:id="@+id/fab_password"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:src="@drawable/ic_password"-->
+<!--            fab:fab_label="Juk"-->
+<!--            fab:fab_size="mini"/>-->
+
         <com.github.clans.fab.FloatingActionButton
             android:id="@+id/fab_debug"
             android:layout_height="wrap_content"

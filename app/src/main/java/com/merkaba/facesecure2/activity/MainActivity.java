@@ -65,6 +65,7 @@ import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.ybq.android.spinkit.SpinKitView;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -92,7 +93,6 @@ import com.merkaba.facesecure2.model.User;
 import com.merkaba.facesecure2.utils.DatabaseHelper;
 import com.merkaba.facesecure2.utils.SendEmailService;
 import com.merkaba.facesecure2.utils.Utils;
-//import com.merkaba.facesecure2.view.BottomSheetFragmentConfirm;
 import com.merkaba.facesecure2.view.PaintView;
 import com.ornach.nobobutton.NoboButton;
 import com.pixplicity.easyprefs.library.Prefs;
@@ -993,10 +993,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                 @Override
                 public void onError(int error) {
-                    mute();
+//                    mute();
                     Log.d(TAG, "onError" + Integer.toString(error));
                     resetSpeechRecognizer();
-                    startListeningVoiceCommandUIThreadNoSound();
+//                    startListeningVoiceCommandUIThreadNoSound();
+                    startListeningVoiceCommandUIThread();
                 }
 
                 @Override
@@ -1237,24 +1238,67 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //        displayBottomAttendanceConfirm("12345678", "Pradhono Rakhmono", face, false);
     }
 
-    private void assignFabListener() {
-        mFabMenu = findViewById(R.id.fab_menu);
-        mFabMenu.setOnClickListener(new View.OnClickListener() {
+
+    private void callPasswordScreen() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_password, null);
+        dialog.setView(dialogView);
+        dialog.setCancelable(false);
+        final EditText edtPassword = dialogView.findViewById(R.id.edt_password);
+        edtPassword.setHint("Masukkan PIN");
+//        TextInputLayout textInputLayout = findViewById(R.id.textInputLayout_password);
+//        textInputLayout.setHintTextAppearance();
+
+        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View view) {
-//                if(!mFabMenu.isOpened())
-//                    showBlurBackground();
+            public void onClick(DialogInterface dialog, int which) {
+                String password = edtPassword.getText().toString().trim();
+                if (password.equals(getMenuPassword())) {
+                    mIsMenuLocked = false;
+                    mFabMenu.open(true);
+                } else {
+                    displayToastError(null, "PIN salah");
+                    mFabMenu.close(false);
+                }
             }
         });
+
+        dialog.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mFabMenu.close(false);
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+    }
+
+    private boolean mIsMenuLocked = true;
+    private void assignFabListener() {
+
+        mFabMenu = findViewById(R.id.fab_menu);
+//        mFabMenu.setOnMenuButtonClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if(!mFabMenu.isOpened()) {
+//                    if (mIsMenuLocked) {
+//                        callPasswordScreen();
+//                    } else {
+//                        mFabMenu.open(true);
+//                    }
+//                } else {
+//                    mFabMenu.close(true);
+//                }
+//            }
+//        });
         //
         fabStart = findViewById(R.id.fab_start);
         fabStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mFabMenu.close(false);
-//                hideBlurBackground();
                 onStartClick();
-//                testdisplay();
             }
         });
         //
@@ -1264,7 +1308,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void onClick(View v) {
                 // TODO: 10/05/2020 set disable when click and enable when finished
                 mFabMenu.close(false);
-//                hideBlurBackground();
                 onAddUser();
             }
         });
@@ -1293,7 +1336,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         fabDebug.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                promptPasswordDebug();
+//                promptPasswordDebug();
+                onDebugClick();
             }
         });
         FloatingActionButton fabLocation = findViewById(R.id.fab_location);
@@ -1320,6 +1364,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 onEmailClick();
             }
         });
+        //
+//        FloatingActionButton fabPassword = findViewById(R.id.fab_password);
+//        fabPassword.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                onLockMenu();
+//            }
+//        });
+    }
+
+    private void onLockMenu() {
 
     }
 
@@ -1547,6 +1602,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         dialog.setView(dialogView);
         dialog.setCancelable(false);
         final EditText edtPassword = dialogView.findViewById(R.id.edt_password);
+        edtPassword.setHint("Masukkan PIN debug");
 
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
@@ -1554,6 +1610,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 String password = edtPassword.getText().toString().trim();
                 if(password.equals(getDebugPassword()))
                     onDebugClick();
+                else
+                    displayToastError(null, "PIN salah");
             }
         });
 
@@ -1561,7 +1619,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
-//                hideBlurBackground();
             }
         });
         dialog.show();
@@ -1570,6 +1627,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private String getDebugPassword() {
         return ("2410");
+    }
+
+    private String getMenuPassword() {
+        return ("1234");
     }
 
     private void doPingAndSync() {
@@ -1613,7 +1674,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
                 mIsOnline = false;
-//                showDebug("doPingAndPost2");
                 processFrame(detection, false);
             }
         });
@@ -1686,6 +1746,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             /**
              No face match. Quit.
              */
+            mUsernamePostAttendance = "";
+            mUserIdPostAttendance = "";
             speakFeedback("Tidak dikenal.");
             displayBottomMessageUnknown();
             showDebug("No face match");
@@ -1895,23 +1957,23 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mUsernamePostAttendance;
     private boolean mIsOnline = false;
 
-    private void playDing() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                MediaPlayer mPlayer = MediaPlayer.create(mContext, R.raw.pristine2);
-                mPlayer.setLooping(false);
-                mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                    @Override
-                    public void onCompletion(MediaPlayer mediaPlayer) {
-                        mute();
-                    }
-                });
-                mPlayer.start();
-            }
-        });
-
-    }
+//    private void playDing() {
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                MediaPlayer mPlayer = MediaPlayer.create(mContext, R.raw.pristine2);
+//                mPlayer.setLooping(false);
+//                mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+//                    @Override
+//                    public void onCompletion(MediaPlayer mediaPlayer) {
+//                        mute();
+//                    }
+//                });
+//                mPlayer.start();
+//            }
+//        });
+//
+//    }
 
     private void startListeningVoiceCommandUIThreadNoSound() {
         if(mVoiceCommand) {
@@ -2411,13 +2473,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void onAddUser() {
+//        onStartClick();
         displayProgressGreen();
         Intent intent = new Intent(MainActivity.this, AddActivity.class);
-        startActivity(intent);
-    }
-
-    private void openTestActivity() {
-        Intent intent = new Intent(MainActivity.this, GeneralPurposeActivity.class);
         startActivity(intent);
     }
 
@@ -2823,6 +2881,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         resetSpeechRecognizerUIThread();
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
+        final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
 //        mDialogAttendanceConfirm.dismiss();
         if(attType.equals(STRING_CLOCK_CANCEL)) {
 //            mIsProcessing = false;
@@ -2835,7 +2894,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 postAttendanceOnline(userId, name, attType, face);
             } else {
 //                showDebug("IN clicked on offline mode");
-                final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
                 Attendance attendance = new Attendance(userId, createdDateTime,
                         attType, mLocation, face, "X");
                 insertAttendance(attendance);
@@ -2852,7 +2910,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 postAttendanceOnline(userId, name, attType, face);
             } else {
                 showDebug("OUT clicked on offline mode");
-                Attendance attendance = new Attendance(userId, SystemClock.uptimeMillis(),
+                Attendance attendance = new Attendance(userId, createdDateTime,
                         attType, mLocation, face, "X");
                 insertAttendance(attendance);
 //                mIsProcessing = false;
@@ -3808,7 +3866,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             float deltax = DELTA_X_FACE * abs(right_eye[0] - left_eye[0]);
                             float deltay = DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
                             float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
-                            float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltax};
+                            float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
                             float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
                             // re-calculate the size
                             float crop_w = bb_right_top_1[0] - bb_left_top_1[0];

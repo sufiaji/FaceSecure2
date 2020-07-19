@@ -331,6 +331,9 @@ public class AddActivity extends AppCompatActivity {
         rparams.add("user_id", nik);
         rparams.add("name", name);
         rparams.put("thumb", encodedFile);
+        String createdAtNow = new DateUtils("-").getCurrentDate();
+        String createdOnNow = new DateUtils("-").getCurrentTime();
+        final long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
         if(fullBitmap!=null) {
             Bitmap scaledBitmap = Utils.scaleImageKeepAspectRatio(fullBitmap, 400);
             byte[] byteArrayPhoto2 = Utils.getBitmapAsByteArray(scaledBitmap);
@@ -349,9 +352,6 @@ public class AddActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                String createdAtNow = new DateUtils("-").getCurrentDate();
-                String createdOnNow = new DateUtils("-").getCurrentTime();
-                long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
                 insertNewUser(nik, name, createdDateTimeNow, encodedFile);
                 mProgressBar.setVisibility(View.GONE);
                 displayBottomAttendanceOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
@@ -404,7 +404,7 @@ public class AddActivity extends AppCompatActivity {
                 }
             }
         };
-        handler.postDelayed(runnable, 4000);
+        handler.postDelayed(runnable, 3000);
     }
 
     private void displayToastSuccess(String message) {
@@ -532,7 +532,7 @@ public class AddActivity extends AppCompatActivity {
                             float deltax = MainActivity.DELTA_X_FACE * abs(right_eye[0] - left_eye[0]);
                             float deltay = MainActivity.DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
                             float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
-                            float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltax};
+                            float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
                             float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
                             // re-calculate the size
                             float crop_w = bb_right_top_1[0] - bb_left_top_1[0];

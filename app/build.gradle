@@ -98,7 +98,8 @@ dependencies {
     implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
     implementation('org.tensorflow:tensorflow-lite-support:0.0.0-nightly') { changing = true }
     // custom fab & fam
-    implementation 'com.github.clans:fab:1.6.4'
+//    implementation 'com.github.clans:fab:1.6.4'
+    implementation 'com.github.hannesa2:FloatingActionButton:2.3.2'
     // input dialog
     implementation 'com.yarolegovich:lovely-dialog:1.1.0'
     // Pref wrapper

@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public static final String PREF_SMTP_RECEIVER_USER = "smtp_receiver";
     public static final String PREF_SMTP_EMAIL_SEND_TIME = "email_send_time";
     public static final String PREF_SEND_MAIL = "send_email";
+    public static final String PREF_PIN_MENU = "pin_menu";
 
     public static final String URL_GET_PING = "/api/v1/facesecure/ping/";
     public static final String URL_GET_PREDICTION = "/api/v1/facesecure/recognize/";
@@ -745,7 +746,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                             } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_FAKE)) {
 //                                mIsProcessing = true;
-                                displayToastError(null, "Gambar terdeteksi");
+//                                displayToastError(null, "Gambar terdeteksi");
                                 delayedFinishProcessFlag();
                             } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_UNAVAIL)) {
 //                                mIsProcessing = true;
@@ -805,7 +806,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     if(mLivenessUnavailCounter > 0)
                                         displayToastError(null, "Liveness Detection tidak tersedia, proses dibatalkan.");
                                     else
-                                        displayToastError(null, "Gambar terdeteksi");
+//                                        displayToastError(null, "Gambar terdeteksi");
                                     delayedFinishProcessFlag();
                                 }
                             } else {
@@ -1278,20 +1279,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void assignFabListener() {
 
         mFabMenu = findViewById(R.id.fab_menu);
-//        mFabMenu.setOnMenuButtonClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if(!mFabMenu.isOpened()) {
-//                    if (mIsMenuLocked) {
-//                        callPasswordScreen();
-//                    } else {
-//                        mFabMenu.open(true);
-//                    }
-//                } else {
-//                    mFabMenu.close(true);
-//                }
-//            }
-//        });
+        mFabMenu.setOnMenuButtonClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(!mFabMenu.isOpened()) {
+                    if (mIsMenuLocked) {
+                        callPasswordScreen();
+                    } else {
+                        mFabMenu.open(true);
+                    }
+                } else {
+                    mFabMenu.close(true);
+                }
+            }
+        });
         //
         fabStart = findViewById(R.id.fab_start);
         fabStart.setOnClickListener(new View.OnClickListener() {
@@ -1337,6 +1338,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onClick(View v) {
 //                promptPasswordDebug();
+                mFabMenu.close(false);
                 onDebugClick();
             }
         });
@@ -1430,7 +1432,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void downloadUser() {
         mDownloadUser = false;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(3, 1000);
+//        client.setMaxRetriesAndTimeout(3, 1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         String url = URL_HTTP + mIpAndPort + URL_GET_ALL_USER;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
@@ -1484,7 +1489,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void downloadEncoding() {
         mDownloadEncoding = false;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(3, 1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         String url = URL_HTTP + mIpAndPort + URL_GET_ALL_ENCODING;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
@@ -1525,7 +1532,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if(attendances.size()<=0) return;
         mUploadAttendance = false;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(3, 1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+//        client.setResponseTimeout(mResponseTimeout);
+//        client.setConnectTimeout(mConnectTimeout);
         RequestParams rparams = new RequestParams();
         String jAttendances = new Gson().toJson(attendances);
         rparams.add("attendances", jAttendances);
@@ -1629,15 +1638,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         return ("2410");
     }
 
+
     private String getMenuPassword() {
-        return ("1234");
+        String pin = Prefs.getString(PREF_PIN_MENU, "1234");
+        return pin;
     }
 
     private void doPingAndSync() {
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(1,1000);
-        client.setResponseTimeout(1000);
-        client.setConnectTimeout(1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         String url = URL_HTTP + mIpAndPort + URL_GET_PING;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
@@ -1653,15 +1664,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
+    private int mResponseTimeout = 3000;
+    private int mConnectTimeout = 2000;
+    private int mMaxRetries = 3;
+    private int mMaxRetryTimeout = 2000;
+
     private void doPingAndPost(final DetectionProto.Detection detection) {
         showDebug("doPingAndPost");
         mIsProcessing = true;
         startAnim = true;
         displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(1,1000);
-        client.setResponseTimeout(1000);
-        client.setConnectTimeout(1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         String url = URL_HTTP + mIpAndPort + URL_GET_PING;
         showDebug(url);
         client.get(url, new AsyncHttpResponseHandler() {
@@ -1770,7 +1786,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         rparams.put("thumb", encodedFile);
         rparams.put("threshold", mThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(2, 1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         client.setResponseTimeout(3000);
         showDebug(url);
         client.get(url, rparams, new AsyncHttpResponseHandler() {
@@ -2137,8 +2155,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
          */
         String url = URL_HTTP + mIpAndPort + URL_GET_LAST_ATTENDANCE;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(2, 1000);
-        client.setResponseTimeout(5000);
+//        client.setMaxRetriesAndTimeout(2, 1000);
+//        client.setResponseTimeout(5000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", userId);
         showDebug(url);
@@ -2239,8 +2260,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         String encodedThumb = Utils.getByteArrayAsString64(byteArray);
 
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(2, 1000);
-        client.setResponseTimeout(5000);
+//        client.setMaxRetriesAndTimeout(2, 1000);
+//        client.setResponseTimeout(5000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", userId);
         rparams.add("status", status);
@@ -2507,11 +2531,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void onDebugClick() {
-        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_debug, null);
-        dialog.setView(dialogView);
-        dialog.setCancelable(false);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        final AlertDialog dialog = builder.create();
         final CheckBox ck1 = dialogView.findViewById(R.id.ck_debug_mode);
         final CheckBox ck2 = dialogView.findViewById(R.id.ck_post_attendance);
         final CheckBox ck3 = dialogView.findViewById(R.id.ck_nopost_attendance);
@@ -2532,6 +2557,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 finish();
             }
         });
+        NoboButton btnLock = dialogView.findViewById(R.id.btn_lock);
+        btnLock.setEnabled(!mIsMenuLocked);
+        btnLock.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mIsMenuLocked = true;
+                dialog.dismiss();
+            }
+        });
 
         ck3.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -2540,10 +2574,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
 
-        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-
+        NoboButton btnOk = dialogView.findViewById(R.id.btn_debug_ok);
+        btnOk.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View view) {
                 mDebug = ck1.isChecked();
                 mPostAttendanceDuringDebug = ck2.isChecked();
                 mNoPostAttendance = ck3.isChecked();
@@ -2559,18 +2593,51 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     showDebugListView();
                 else
                     hideDebugListView();
+
                 dialog.dismiss();
-//                hideBlurBackground();
             }
         });
 
-        dialog.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+        NoboButton btnCancel = dialogView.findViewById(R.id.btn_debug_cancel);
+        btnCancel.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
+            public void onClick(View view) {
                 dialog.dismiss();
-//                hideBlurBackground();
             }
         });
+
+        NoboButton btnChangePin = dialogView.findViewById(R.id.btn_change_pin);
+        btnChangePin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String oldPin = getMenuPassword();
+                EditText edtOldPin = dialogView.findViewById(R.id.edt_old_pin);
+                EditText newPin1 = dialogView.findViewById(R.id.edt_new_pin_1);
+                EditText newPin2 = dialogView.findViewById(R.id.edt_new_pin_2);
+                if(edtOldPin.getText().toString().isEmpty() || newPin1.getText().toString().isEmpty()
+                || newPin2.getText().toString().isEmpty()) {
+                    displayToastError(null, "Old & New PIN cannot be empty");
+                    return;
+                }
+                if(edtOldPin.getText().toString().equalsIgnoreCase(oldPin)) {
+                    if(newPin1.getText().toString().equalsIgnoreCase(newPin2.getText().toString())) {
+                        if(newPin1.getText().toString().equalsIgnoreCase(oldPin)) {
+                            displayToastError(null, "New PIN cannot be the same with old PIN");
+                        } else {
+                            String newPin = newPin1.getText().toString();
+                            Prefs.putString(PREF_PIN_MENU, newPin);
+                            displayToastSuccess("PIN changed.");
+                            dialog.dismiss();
+                        }
+                    } else {
+                        displayToastError(null, "New PINs are not the same");
+                    }
+                } else {
+                    displayToastError(null, "Wrong old PIN");
+                }
+            }
+        });
+
         dialog.show();
     }
 
@@ -3264,9 +3331,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 String finalTextIp = textIp + ":" + SERVER_PORT;
                 // ping the address
                 AsyncHttpClient client = new AsyncHttpClient();
-                client.setMaxRetriesAndTimeout(1,1000);
-                client.setResponseTimeout(1000);
-                client.setConnectTimeout(1000);
+                client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+                client.setResponseTimeout(mResponseTimeout);
+                client.setConnectTimeout(mConnectTimeout);
                 String url = URL_HTTP + finalTextIp + URL_GET_PING;
                 client.get(url, new AsyncHttpResponseHandler() {
                     @Override
@@ -3526,9 +3593,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         startAnim = true;
 //        displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(1,1000);
-        client.setResponseTimeout(1000);
-        client.setConnectTimeout(1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         String url = URL_HTTP + mIpAndPort + URL_GET_PING;
         showDebug(url);
         client.get(url, new AsyncHttpResponseHandler() {
@@ -3555,9 +3622,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void requestLivenessToServer(String faceString) {
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(1,1000);
-        client.setResponseTimeout(1000);
-        client.setConnectTimeout(1000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
         RequestParams rparams = new RequestParams();
         rparams.put("thumb", faceString);
         String url = URL_HTTP + mIpAndPort + URL_GET_LIVENESS;

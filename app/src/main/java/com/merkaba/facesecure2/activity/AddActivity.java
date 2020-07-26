@@ -285,6 +285,7 @@ public class AddActivity extends AppCompatActivity {
         }
         final Bitmap cropped = mCroppedBitmap;
         final Bitmap fullBitmap = mOriginalBitmap;
+        mMiniPreview.setVisibility(View.VISIBLE);
         setBitmap(fullBitmap);
         AlertDialog.Builder dialog = new AlertDialog.Builder(AddActivity.this);
         LayoutInflater inflater = getLayoutInflater();

@@ -1,138 +1,286 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical">
+    android:fillViewport="false">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="@dimen/dialog_title_height"
-        android:background="@android:color/holo_red_light">
-        <ImageView
-            android:layout_width="@dimen/dialog_icon_size"
-            android:layout_height="@dimen/dialog_icon_size"
-            android:layout_centerInParent="true"
-            android:src="@drawable/ic_code"/>
-    </RelativeLayout>
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="@dimen/dialog_font_title"
-        android:layout_marginLeft="@dimen/dialog_margin_left_title"
-        android:textColor="#000000"
-        android:layout_marginTop="@dimen/dialog_margin_top_title"
-        android:text="Debug Mode (internal use)"/>
-    <TextView
-        android:layout_marginTop="16dp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
-        android:text="Enable debug mode to display event queue in application. You may select whether we need to post attendance data to server during debug mode"/>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dialog_title_height"
+            android:background="@android:color/holo_red_light">
+            <ImageView
+                android:layout_width="@dimen/dialog_icon_size"
+                android:layout_height="@dimen/dialog_icon_size"
+                android:layout_centerInParent="true"
+                android:src="@drawable/ic_code"/>
+        </RelativeLayout>
 
-    <CheckBox
-        android:layout_marginTop="24dp"
-        android:id="@+id/ck_debug_mode"
-        android:layout_marginLeft="36dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:textSize="13sp"
-        android:text="Enable Debug Mode"/>
-    <CheckBox
-        android:id="@+id/ck_post_attendance"
-        android:layout_marginLeft="36dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:textSize="13sp"
-        android:text="Post attendance to DB during Debug?"/>
-    <CheckBox
-        android:id="@+id/ck_nopost_attendance"
-        android:layout_marginLeft="36dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:checked="true"
-        android:textSize="13sp"
-        android:text="No Post attendance to DB"/>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
-        app:hintTextAppearance="@style/MyHintText">
-
-        <EditText
-            android:id="@+id/edt_threshold_face_distance"
-            android:layout_width="400dp"
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:inputType="numberDecimal"
-            android:textSize="13sp"
-            android:hint="Vector Distance Threshold (0 to 1)"
-            android:theme="@style/MyEditText"/>
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
-        app:hintTextAppearance="@style/MyHintText">
-
-        <EditText
-            android:id="@+id/edt_threshold_liveness"
-            android:layout_width="400dp"
+            android:textStyle="bold"
+            android:textSize="@dimen/dialog_font_title"
+            android:layout_marginLeft="@dimen/dialog_margin_left_title"
+            android:textColor="#000000"
+            android:layout_marginTop="@dimen/dialog_margin_top_title"
+            android:text="Debug Mode (internal use)"/>
+        <TextView
+            android:layout_marginTop="16dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:inputType="numberDecimal"
-            android:textSize="13sp"
-            android:hint="Liveness Detection Threshold"
-            android:theme="@style/MyEditText"/>
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            android:text="Enable debug mode to display event queue in application. You may select whether we need to post attendance data to server during debug mode"/>
 
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
-        app:hintTextAppearance="@style/MyHintText">
-
-        <EditText
-            android:id="@+id/edt_delayed_finish"
-            android:layout_width="400dp"
+        <CheckBox
+            android:layout_marginTop="24dp"
+            android:id="@+id/ck_debug_mode"
+            android:layout_marginLeft="36dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingLeft="12dp"
-            android:inputType="numberDecimal"
+            android:checked="true"
             android:textSize="13sp"
-            android:hint="Wait time between processes"
-            android:theme="@style/MyEditText"/>
+            android:text="Enable Debug Mode"/>
+        <CheckBox
+            android:id="@+id/ck_post_attendance"
+            android:layout_marginLeft="36dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:textSize="13sp"
+            android:text="Post attendance to DB during Debug?"/>
+        <CheckBox
+            android:id="@+id/ck_nopost_attendance"
+            android:layout_marginLeft="36dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:textSize="13sp"
+            android:text="No Post attendance to DB"/>
 
-    </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            app:hintTextAppearance="@style/MyHintText">
 
-    <com.ornach.nobobutton.NoboButton
-        android:id="@+id/btn_exit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="36dp"
-        android:layout_marginRight="36dp"
-        android:layout_marginTop="12dp"
-        app:nb_backgroundColor="#f00"
-        app:nb_borderColor="#f00"
-        app:nb_borderWidth="2dp"
-        app:nb_textStyle="bold"
-        app:nb_focusColor="@color/colorRed"
-        app:nb_radius="5dp"
-        app:nb_text="EXIT PROGRAM"
-        app:nb_textColor="#fff"/>
+            <EditText
+                android:id="@+id/edt_threshold_face_distance"
+                android:layout_width="400dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberDecimal"
+                android:textSize="13sp"
+                android:hint="Vector Distance Threshold (0 to 1)"
+                android:theme="@style/MyEditText"/>
 
-</LinearLayout>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            app:hintTextAppearance="@style/MyHintText">
+
+            <EditText
+                android:id="@+id/edt_threshold_liveness"
+                android:layout_width="400dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberDecimal"
+                android:textSize="13sp"
+                android:hint="Liveness Detection Threshold"
+                android:theme="@style/MyEditText"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            app:hintTextAppearance="@style/MyHintText">
+
+            <EditText
+                android:id="@+id/edt_delayed_finish"
+                android:layout_width="400dp"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberDecimal"
+                android:textSize="13sp"
+                android:hint="Wait time between processes"
+                android:theme="@style/MyEditText"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginRight="24dp"
+            android:layout_marginBottom="24dp"
+            android:layout_marginLeft="24dp">
+            <com.ornach.nobobutton.NoboButton
+                android:id="@+id/btn_debug_ok"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                app:nb_text="OK"
+                app:nb_textStyle="bold"
+                app:nb_textSize="14sp"
+                app:nb_backgroundColor="#00ffffff"
+                app:nb_textColor="@color/colorAccent"/>
+
+            <com.ornach.nobobutton.NoboButton
+                android:id="@+id/btn_debug_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                app:nb_text="Cancel"
+                app:nb_textStyle="bold"
+                app:nb_textSize="14sp"
+                app:nb_backgroundColor="#00ffffff"
+                app:nb_textColor="@color/colorRed"/>
+        </RelativeLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            android:layout_marginBottom="24dp"
+            android:orientation="vertical"
+            android:background="@drawable/layout_with_border">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:layout_marginLeft="8dp"
+                android:textSize="@dimen/dialog_font_title"
+                android:textColor="#000000"
+                android:text="Change PIN "/>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                app:hintTextAppearance="@style/MyHintText">
+
+                <EditText
+                    android:id="@+id/edt_old_pin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="12dp"
+                    android:inputType="numberPassword"
+                    android:textSize="13sp"
+                    android:hint="Old PIN"
+                    android:maxLength="4"
+                    android:theme="@style/MyEditText"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                app:hintTextAppearance="@style/MyHintText">
+
+                <EditText
+                    android:id="@+id/edt_new_pin_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="12dp"
+                    android:inputType="numberPassword"
+                    android:textSize="13sp"
+                    android:hint="New PIN"
+                    android:maxLength="4"
+                    android:theme="@style/MyEditText"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                android:layout_marginBottom="12dp"
+                app:hintTextAppearance="@style/MyHintText">
+
+                <EditText
+                    android:id="@+id/edt_new_pin_2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="12dp"
+                    android:inputType="numberPassword"
+                    android:textSize="13sp"
+                    android:hint="Retype New PIN"
+                    android:maxLength="4"
+                    android:theme="@style/MyEditText"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.ornach.nobobutton.NoboButton
+                android:id="@+id/btn_change_pin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="12dp"
+                android:layout_marginRight="12dp"
+                android:layout_marginBottom="12dp"
+                app:nb_backgroundColor="@color/colorPrimary"
+                app:nb_textStyle="bold"
+                app:nb_focusColor="@color/colorPrimaryDark"
+                app:nb_radius="5dp"
+                app:nb_text="CHANGE PIN"
+                app:nb_textColor="#fff"/>
+
+        </LinearLayout>
+
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_lock"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            app:nb_backgroundColor="@color/colorPurple"
+            app:nb_textStyle="bold"
+            app:nb_focusColor="@color/colorPurpleDark"
+            app:nb_radius="5dp"
+            app:nb_text="LOCK MENU"
+            app:nb_textColor="#fff"/>
+
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_exit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="36dp"
+            android:layout_marginRight="36dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="18dp"
+            app:nb_backgroundColor="@color/colorRed"
+            app:nb_textStyle="bold"
+            app:nb_focusColor="#f00"
+            app:nb_radius="5dp"
+            app:nb_text="EXIT PROGRAM"
+            app:nb_textColor="#fff"/>
+
+    </LinearLayout>
+</ScrollView>

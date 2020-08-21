@@ -67,7 +67,6 @@
     </RelativeLayout>
 
     <LinearLayout
-        android:layout_below="@id/layout3"
         android:layout_marginLeft="6dp"
         android:layout_marginBottom="6dp"
         android:layout_marginRight="6dp"

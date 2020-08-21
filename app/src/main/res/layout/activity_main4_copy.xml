@@ -75,6 +75,15 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"/>
 
+    <!--
+    <ImageView
+        android:id="@+id/imagex"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:background="#fff"/>
+    -->
+
     <include layout="@layout/include_fab_menu"
         android:id="@+id/layout_fab_menu"/>
 
@@ -125,5 +134,7 @@
         android:orientation="vertical"
         android:visibility="gone"
         android:background="#000000"/>
+
+
 
 </RelativeLayout>

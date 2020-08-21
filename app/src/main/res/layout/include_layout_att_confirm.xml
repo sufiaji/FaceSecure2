@@ -108,63 +108,63 @@
             </LinearLayout>
         </RelativeLayout>
 
-<!--        <RelativeLayout-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:paddingBottom="12dp"-->
-<!--            android:orientation="horizontal">-->
+        <!--        <RelativeLayout-->
+        <!--            android:layout_width="match_parent"-->
+        <!--            android:layout_height="wrap_content"-->
+        <!--            android:paddingBottom="12dp"-->
+        <!--            android:orientation="horizontal">-->
 
-<!--            <Button-->
-<!--                android:id="@+id/btn_cancel"-->
-<!--                android:text="cancel"-->
-<!--                android:textColor="#000"-->
-<!--                android:textSize="12sp"-->
-<!--                android:layout_width="72dp"-->
-<!--                android:layout_height="72dp"-->
-<!--                android:background="@drawable/buttonshape_clockin"-->
-<!--                android:drawableTop="@drawable/aji_thumb1"-->
-<!--                android:shadowDx="0"-->
-<!--                android:shadowDy="0"-->
-<!--                android:layout_toRightOf="@id/btn_clockout"-->
-<!--                android:shadowRadius="5"-->
+        <!--            <Button-->
+        <!--                android:id="@+id/btn_cancel"-->
+        <!--                android:text="cancel"-->
+        <!--                android:textColor="#000"-->
+        <!--                android:textSize="12sp"-->
+        <!--                android:layout_width="72dp"-->
+        <!--                android:layout_height="72dp"-->
+        <!--                android:background="@drawable/buttonshape_clockin"-->
+        <!--                android:drawableTop="@drawable/aji_thumb1"-->
+        <!--                android:shadowDx="0"-->
+        <!--                android:shadowDy="0"-->
+        <!--                android:layout_toRightOf="@id/btn_clockout"-->
+        <!--                android:shadowRadius="5"-->
 
-<!--                />-->
-<!--            <Button-->
-<!--                android:id="@+id/btn_clockout"-->
-<!--                android:layout_centerHorizontal="true"-->
-<!--                android:text="clock out"-->
-<!--                android:textColor="#000"-->
-<!--                android:textSize="12sp"-->
-<!--                android:layout_marginRight="24dp"-->
-<!--                android:layout_marginLeft="24dp"-->
-<!--                android:layout_width="72dp"-->
-<!--                android:layout_height="72dp"-->
-<!--                android:background="@drawable/buttonshape_clockin"-->
+        <!--                />-->
+        <!--            <Button-->
+        <!--                android:id="@+id/btn_clockout"-->
+        <!--                android:layout_centerHorizontal="true"-->
+        <!--                android:text="clock out"-->
+        <!--                android:textColor="#000"-->
+        <!--                android:textSize="12sp"-->
+        <!--                android:layout_marginRight="24dp"-->
+        <!--                android:layout_marginLeft="24dp"-->
+        <!--                android:layout_width="72dp"-->
+        <!--                android:layout_height="72dp"-->
+        <!--                android:background="@drawable/buttonshape_clockin"-->
 
-<!--                android:shadowDx="0"-->
-<!--                android:shadowDy="0"-->
-<!--                android:shadowRadius="12"-->
+        <!--                android:shadowDx="0"-->
+        <!--                android:shadowDy="0"-->
+        <!--                android:shadowRadius="12"-->
 
-<!--                />-->
+        <!--                />-->
 
-<!--            <Button-->
-<!--                android:id="@+id/btn_clockin"-->
-<!--                android:layout_centerHorizontal="true"-->
-<!--                android:text="Clock In"-->
-<!--                android:textColor="#000"-->
-<!--                android:textSize="12sp"-->
+        <!--            <Button-->
+        <!--                android:id="@+id/btn_clockin"-->
+        <!--                android:layout_centerHorizontal="true"-->
+        <!--                android:text="Clock In"-->
+        <!--                android:textColor="#000"-->
+        <!--                android:textSize="12sp"-->
 
-<!--                android:layout_toLeftOf="@id/btn_clockout"-->
-<!--                android:layout_width="72dp"-->
-<!--                android:layout_height="72dp"-->
-<!--                android:background="@drawable/buttonshape_clockin"-->
-<!--                android:shadowColor="#576CF2"-->
-<!--                android:shadowDx="0"-->
-<!--                android:shadowDy="0"-->
+        <!--                android:layout_toLeftOf="@id/btn_clockout"-->
+        <!--                android:layout_width="72dp"-->
+        <!--                android:layout_height="72dp"-->
+        <!--                android:background="@drawable/buttonshape_clockin"-->
+        <!--                android:shadowColor="#576CF2"-->
+        <!--                android:shadowDx="0"-->
+        <!--                android:shadowDy="0"-->
 
-<!--                />-->
+        <!--                />-->
 
-<!--        </RelativeLayout>-->
+        <!--        </RelativeLayout>-->
 
         <LinearLayout
             android:id="@+id/layout0"
@@ -211,7 +211,6 @@
         </LinearLayout>
 
         <LinearLayout
-            android:layout_below="@id/layout3"
             android:layout_marginTop="12dp"
             android:layout_marginLeft="6dp"
             android:layout_marginBottom="6dp"

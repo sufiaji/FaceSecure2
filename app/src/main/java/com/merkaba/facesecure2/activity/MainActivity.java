@@ -20,7 +20,6 @@ import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,7 +64,6 @@ import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.ybq.android.spinkit.SpinKitView;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -75,6 +73,9 @@ import com.google.mediapipe.formats.proto.DetectionProto;
 import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
+import com.harrysoft.androidbluetoothserial.BluetoothManager;
+import com.harrysoft.androidbluetoothserial.BluetoothSerialDevice;
+import com.harrysoft.androidbluetoothserial.SimpleBluetoothDeviceInterface;
 import com.jackandphantom.circularimageview.CircleImage;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
@@ -121,13 +122,15 @@ import javax.annotation.Nullable;
 import cz.msebera.android.httpclient.Header;
 import eightbitlab.com.blurview.BlurView;
 import eightbitlab.com.blurview.RenderScriptBlur;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 
 import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 import static java.lang.Math.round;
 import static java.lang.Math.toDegrees;
 
-public class MainActivity extends AppCompatActivity { // implements FaceSubscriber.IFaceCallback
+public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     public static final String BINARY_GRAPH_NAME = "facedetectioncpu.binarypb";
@@ -160,6 +163,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public static final String PREF_SMTP_EMAIL_SEND_TIME = "email_send_time";
     public static final String PREF_SEND_MAIL = "send_email";
     public static final String PREF_PIN_MENU = "pin_menu";
+    public static final String PREF_THRESHOLD_TEMPERATURE = "threshold_temperature";
 
     public static final String URL_GET_PING = "/api/v1/facesecure/ping/";
     public static final String URL_GET_PREDICTION = "/api/v1/facesecure/recognize/";
@@ -201,15 +205,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     public static final String NA = "na";
     public static final String DEFAULT_IP = "0.0.0.0:0000";
-//    private static final String THREAD_DESTROYED = "destroyed";
-//    private static final String THREAD_CREATED = "created";
-//    private static final String THREAD_RUN = "running";
+
     public static final int ENCODING_LENGTH = 128;
     public static final float DELTA_X_FACE = 0.4f;
     public static final float DELTA_Y_FACE = 0.6f;
     public static final String CARRIAGE_RETURN = System.getProperty("line.separator");
 
-//    private final int mSpeakCounterMax = 5;
 
     // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
     // processed in a MediaPipe graph, and flips the processed frames back when they are displayed.
@@ -328,6 +329,18 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mSmtpEmailTime = "23:45";
     private boolean mSendMail = false;
 
+    private int mResponseTimeout = 1000; //3000;
+    private int mConnectTimeout = 1000; //2000;
+    private int mMaxRetries = 1; //3;
+    private int mMaxRetryTimeout = 1000; //2000;
+
+    /**
+     * Toggle this variable to False for Alpharai,
+     * True for ALpharaiThermal
+     */
+    public static boolean Is_Thermal_Supported = false;
+    private int mThermalScanCounter = 3;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         showLog("onCreate");
@@ -421,12 +434,64 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         // init blur code
         prepareBlurBackground();
 
+        // prepare Bluetooth
+        prepareThermalSCanner();
+    }
+
+    private String mBluetoothMacAddress = "00:19:10:08:E6:32";
+    private ArrayList<Float> mTemperatures = new ArrayList<>();
+    private void prepareThermalSCanner() {
+        if(!Is_Thermal_Supported) return;
+        mBluetoothManager = BluetoothManager.getInstance();
+        if (mBluetoothManager == null) {
+            // Bluetooth unavailable on this device :( tell the user
+            displayToastWarning("Bluetooth tidak tersedia, tidak dapat mengambil data suhu");
+            Is_Thermal_Supported = false;
+            return;
+        }
+        connectDevice(mBluetoothMacAddress);
+        mTemperatures.clear();
+    }
+
+
+    private void connectDevice(String mac) {
+        mBluetoothManager.openSerialDevice(mac)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onConnected, this::onError);
+    }
+
+    private void onConnected(BluetoothSerialDevice connectedDevice) {
+        // You are now connected to this device!
+        // Here you may want to retain an instance to your device:
+        mDeviceInterface = connectedDevice.toSimpleDeviceInterface();
+
+        // Listen to bluetooth events
+        mDeviceInterface.setListeners(this::onMessageReceived, this::onMessageSent, this::onError);
+        displayToastSuccess("Bluetooth is connected");
+
+    }
+
+    private void onMessageSent(String message) {
+        // We sent a message! Handle it here.
+//        Toast.makeText(this, "Sent a message! Message was: " + message, Toast.LENGTH_LONG).show(); // Replace context with your context instance.
+    }
+
+    private void onMessageReceived(String message) {
+        // We received a message! Handle it here.
+        showDebug("Temperature: " + message);
+        mTemperatures.add(Float.parseFloat(message));
+//        Toast.makeText(this, "Received a message! Message was: " + message, Toast.LENGTH_LONG).show(); // Replace context with your context instance.
+    }
+
+    private void onError(Throwable error) {
+        // Handle the error
     }
 
     private BlurView mBlurView;
     private ImageView mImageViewBlur;
     private void prepareBlurBackground() {
-        float radius = 12f;
+        float radius = 8f;
         mBlurView = findViewById(R.id.layoutBlur);
         mImageViewBlur = findViewById(R.id.image_blur);
 
@@ -500,11 +565,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                      * standby timer de-activated if BB is green
                                      */
                                     evaluateFaceOnThread(detections.get(0));
-                                    if(!mIsProcessing) {
+//                                    if(!mIsProcessing) {
                                         // we evaluate face first
                                         // if face area is large enough then trigger the timer and stop standby screen
                                         // startFDTimer();
-                                    }
+//                                    }
                                 } else {
                                     clearBB();
                                 }
@@ -732,29 +797,32 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 switch (msg.what) {
                     case TIMER_OVERFLOW_FD:
                         mFDTimerIsRun = false;
-                        if(mFaceLivenessStatus.equalsIgnoreCase("NA")) {
-//                            showDebug("Liveness Process is not finished yet");
-                        } else {
-//                            showDebug("Liveness status on Timer: " + mFaceLivenessStatus);
-                            mIsProcessing = true;
-//                            startAnim = true;
-                            if(mFaceLivenessStatus.equalsIgnoreCase(FACE_REAL)) {
-                                // if Liveness already finished and status is REAL, continue process attendnace
-                                showDebug("Liveness status on Timer REAL, begin process Attendance");
-                                startAnim = true;
-                                beginProcessAttendance();
-
-                            } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_FAKE)) {
-//                                mIsProcessing = true;
-//                                displayToastError(null, "Gambar terdeteksi");
-                                delayedFinishProcessFlag();
-                            } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_UNAVAIL)) {
-//                                mIsProcessing = true;
-                                displayToastError(null, "Liveness Detection tidak tersedia, proses dibatalkan.");
-                                delayedFinishProcessFlag();
-                            }
-                            mTimerFDAndLivenessIsFinished = true;
-                        }
+                        mTimerFDAndLivenessIsFinished = true;
+                        beginProcessAttendance();
+//                        if(mFaceLivenessStatus.equalsIgnoreCase("NA")) {
+////                            showDebug("Liveness Process is not finished yet");
+//                        } else {
+////                            showDebug("Liveness status on Timer: " + mFaceLivenessStatus);
+//                            mIsProcessing = true;
+////                            startAnim = true;
+//                            if(mFaceLivenessStatus.equalsIgnoreCase(FACE_REAL)) {
+//                                // if Liveness already finished and status is REAL, continue process attendnace
+//                                showDebug("Liveness status on Timer REAL, begin process Attendance");
+//                                startAnim = true;
+//                                beginProcessAttendance();
+//
+//                            } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_FAKE)) {
+////                                mIsProcessing = true;
+////                                displayToastError(null, "Gambar terdeteksi");
+//                                showDebug("Gambar terdeteksi");
+//                                delayedFinishProcessFlag();
+//                            } else if(mFaceLivenessStatus.equalsIgnoreCase(FACE_UNAVAIL)) {
+////                                mIsProcessing = true;
+//                                displayToastError(null, "Liveness Detection tidak tersedia, proses dibatalkan.");
+//                                delayedFinishProcessFlag();
+//                            }
+//                            mTimerFDAndLivenessIsFinished = true;
+//                        }
 
                         break;
                     case TIMER_OVERFLOW_SYNC:
@@ -796,8 +864,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     // ok, this is REAL face & Timer FD finished
                                     // so just start attendance process
                                     showDebug("Liveness status REAL, begin process attendance");
-                                    if(mDebug)
-                                        displayToastSuccess("REAL");
+                                    if(mDebug) displayToastSuccess("REAL");
                                     startAnim = true;
                                     beginProcessAttendance();
 
@@ -806,7 +873,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                     if(mLivenessUnavailCounter > 0)
                                         displayToastError(null, "Liveness Detection tidak tersedia, proses dibatalkan.");
                                     else
+                                        showDebug("Gambar terdeteksi");
 //                                        displayToastError(null, "Gambar terdeteksi");
+
                                     delayedFinishProcessFlag();
                                 }
                             } else {
@@ -885,7 +954,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void startFDTimer() {
         // start timer only if not already been started
         if(!mFDTimerIsRun) {
-//            showDebug("FD TIMER started (" + mFdTimeout + " seconds overflow)");
             mFDTimer = mSchedulerExecutor.schedule(mFDRunnableTimer, mFdTimeout, TimeUnit.SECONDS);
             mFDTimerIsRun = true;
         }
@@ -903,7 +971,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void startLivenessThread() {
-//        showDebug("Start Liveness Thread");
         mSchedulerExecutor.execute(mLivenessRunnableThread);
     }
 
@@ -1248,8 +1315,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         dialog.setCancelable(false);
         final EditText edtPassword = dialogView.findViewById(R.id.edt_password);
         edtPassword.setHint("Masukkan PIN");
-//        TextInputLayout textInputLayout = findViewById(R.id.textInputLayout_password);
-//        textInputLayout.setHintTextAppearance();
 
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
@@ -1337,7 +1402,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         fabDebug.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                promptPasswordDebug();
                 mFabMenu.close(false);
                 onDebugClick();
             }
@@ -1367,13 +1431,19 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         //
-//        FloatingActionButton fabPassword = findViewById(R.id.fab_password);
-//        fabPassword.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                onLockMenu();
-//            }
-//        });
+        FloatingActionButton fabTemp = findViewById(R.id.fab_temperature);
+        if(!Is_Thermal_Supported) {
+            fabTemp.setVisibility(View.GONE);
+        } else {
+            fabTemp.setVisibility(View.VISIBLE);
+        }
+        fabTemp.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mFabMenu.close(false);
+                onTemperatureThresholdClick();
+            }
+        });
     }
 
     private void onLockMenu() {
@@ -1664,11 +1734,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
-    private int mResponseTimeout = 3000;
-    private int mConnectTimeout = 2000;
-    private int mMaxRetries = 3;
-    private int mMaxRetryTimeout = 2000;
-
     private void doPingAndPost(final DetectionProto.Detection detection) {
         showDebug("doPingAndPost");
         mIsProcessing = true;
@@ -1698,7 +1763,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void predictOffline(final Bitmap croppedBitmap) {
         Log.d(TAG, "Entering Predict offline");
         showDebug("Entering Predict offline");
-        final long start = SystemClock.uptimeMillis();
+
+        List<Encoding> encodings = mDbHelper.getAllEncodings();
+        if(encodings.size()==0) {
+            showDebug("No encoding record in database. Quit.");
+            hideProgressSpinKit();
+            hideTextProgress();
+            displayBottomMessageError(null, "Tidak ada data di database.");
+            hideScanAnim();
+            return;
+        }
+
         byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(croppedBitmap);
         String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
         if (!Python.isStarted()) {
@@ -1711,15 +1786,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         PyObject pythonFile = python.getModule("encoder");
         PyObject ret = pythonFile.callAttr("encode", encodedFile);
         float[] encoding = ret.toJava(float[].class);
-        List<Encoding> encodings = mDbHelper.getAllEncodings();
-        if(encodings.size()==0) {
-            showDebug("No encoding record in database. Quit.");
-            hideProgressSpinKit();
-            hideTextProgress();
-            displayBottomMessageError(null, "Tidak ada data di database.");
-            hideScanAnim();
-            return;
-        }
+
         Prediction prediction = new Prediction(encoding, encodings, mThresholdDistanceFaceEmbedding);
         prediction.process();
         String userMatch = prediction.getMatchUserId();
@@ -1730,10 +1797,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             hideScanAnim();
         } else {
             String msg = ">>> " + userMatch + ":" + name + ":" + dist + ", ";
-//            showDebug(msg);
+            showDebug(msg);
         }
-        long stop = SystemClock.uptimeMillis();
-//        showDebug("Timecost: " + (stop-start));
+
         if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
             // debug is on and no need post attendance then quit
             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
@@ -2051,6 +2117,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void speakNoProcess() {
         speakFeedback("Maaf, tidak dapat memproses absensi");
+    }
+
+    private void speakScanningTemperature() {
+        speakFeedback("Membaca suhu tubuh");
+    }
+
+    private void speakTemperatureHigh() {
+        speakFeedback("Suhu tubuh diatas normal");
     }
 
     private void autoModeOffline(final String userId, final String name, final Bitmap croppedBitmap) {
@@ -2497,10 +2571,43 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void onAddUser() {
-//        onStartClick();
         displayProgressGreen();
         Intent intent = new Intent(MainActivity.this, AddActivity.class);
         startActivity(intent);
+    }
+
+    private void onTemperatureThresholdClick() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_temperature, null);
+        dialog.setView(dialogView);
+        dialog.setCancelable(false);
+        final EditText edtTemp = dialogView.findViewById(R.id.edt_th_temp);
+        edtTemp.setHint("Masukkan batas maksimal suhu tubuh");
+        float currentTh = Prefs.getFloat(PREF_THRESHOLD_TEMPERATURE, 37.0f);
+        edtTemp.setText(Float.toString(currentTh));
+
+        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String temp = edtTemp.getText().toString();
+                if(temp.isEmpty()) {
+                    displayToastError(null, "Suhu tidak boleh kosong");
+                    return;
+                }
+                float tf = Float.parseFloat(temp);
+                Prefs.putFloat(PREF_THRESHOLD_TEMPERATURE, tf);
+                dialog.dismiss();
+            }
+        });
+
+        dialog.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
     }
 
     private void onLocationClick() {
@@ -2518,13 +2625,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     public void onTextInputConfirmed(String text) {
                         mLocation = text;
                         Prefs.putString(PREF_TERMINAL_LOCATION, mLocation);
-//                        hideBlurBackground();
                     }
                 })
                 .setNegativeButton("Batal", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-//                        hideBlurBackground();
                     }
                 })
                 .show();
@@ -3006,7 +3111,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             public void run() {
                 showDebug("DELAYED FINISH PROCESS FLAG");
                 mIsProcessing = false;
+                mTemperatureScanDone = false;
+            }
+        };
+        handler.postDelayed(runnable, mDelayTimeBetweenProcess);
+    }
 
+    private void delayedTemperatureNextProcess() {
+        final Handler handler = new Handler();
+        final Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                showDebug("DELAYED TEMPERATURE NEXT PROCESS FLAG");
+                mTemperatureDelayNextProcess = false;
+                mTemperatureScanDone = false;
             }
         };
         handler.postDelayed(runnable, mDelayTimeBetweenProcess);
@@ -3704,7 +3822,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         thread.start();
-//        thread.setPriority(Thread.MIN_PRIORITY);
     }
 
     @Override
@@ -3715,6 +3832,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private boolean mRequestLiveness = false;
     private Bitmap mBitmapBig;
+    private boolean mTemperatureScanDone = false;
+    private float mThresholdTemperatureLow = 36.0f;
+    private boolean mTemperatureDelayNextProcess = false;
+
     private void evaluateFace(DetectionProto.Detection detection) {
         if(mPreviewDisplayView==null) return;
         float previewWidth = (float) mPreviewDisplayView.getWidth();
@@ -3761,37 +3882,147 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                     float faceAreaThreshold = mFaceAreas[mFaceDistanceCategory];
                     if(faceArea > (surfaceArea * faceAreaThreshold)) {
-                        mFaceInArea = true;
+                        /**
+                         * Face is in Detection Area, proceed Liveness & FR
+                         */
+                        if(!Is_Thermal_Supported || mDeviceInterface==null || mBluetoothManager==null) {
+                            /**
+                             * Thermal sensor not connected
+                             */
+                            stopStandbyTimer();
+                            screenOn();
 
-//                        int width = round(2.0f*(bb_right_top[0]-bb_left_top[0])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_right_top[0]-bb_left_top[0], mContext));
-//                        int height = round(2.5f*(bb_left_bottom[1]-bb_left_top[1])); //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_bottom[1]-bb_left_top[1], mContext));
-//                        int X = round(bb_left_top[0])-10; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[0], mContext));
-                        int Y = round(bb_left_top[1])-120; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[1], mContext));
-                        if(startAnim) {
-                            showScanAnim(Y);
-                            clearBB();
+                            mFaceInArea = true;
+
+                            int Y = round(bb_left_top[1]) - 120; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[1], mContext));
+                            if (startAnim) {
+                                showScanAnim(Y);
+                                clearBB();
+                            } else {
+                                drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                            }
+
+                            if (mRequestLiveness)
+                            /**
+                             * Once flag mRequestLiveness set to TRUE,
+                             * we will keep request Liveness Score until reach Counter threshold (default=10 times)
+                             */
+                                startLivenessThread();
+
+                            if (!mIsProcessing && mTimerFDAndLivenessIsFinished) {
+                                /**
+                                 * at first, we request liveness detection
+                                 * and in the same time we run Face Detection waiting timer
+                                 * This will trigger Counter racing between Face Detection Timeout
+                                 * and Liveness Counter by set flag mRequestLiveness = TRUE
+                                 * and call StartFDTimer function
+                                 */
+                                showDebug("mIsProcessing is false and TimerLiveness finished");
+                                mTimerFDAndLivenessIsFinished = false;
+                                startFDTimer();
+                                mFaceLivenessStatus = "NA";
+                                mRequestLiveness = true;
+                            } else {
+                                /**
+                                 * do nothing since:
+                                 * 1. Liveness Detection is on going, or
+                                 * 2. Attendance Process is on going.
+                                 */
+                            }
+
                         } else {
-                            drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
-                        }
-                        stopStandbyTimer();
-//                        showDebug("Put on for Screen...");
-                        screenOn();
-                        if(mRequestLiveness)
-                            startLivenessThread();
-                        if(!mIsProcessing && mTimerFDAndLivenessIsFinished) {
-                            showDebug("mIsProcessing is false and TimerLiveness finished");
-                            mTimerFDAndLivenessIsFinished = false;
-                            startFDTimer();
-                            mFaceLivenessStatus = "NA";
-                            mRequestLiveness = true;
-                        } else {
-//                            showDebug("either mIsProcessing is true or TimerLiveness not finish");
-//                            showDebug("mIsProcessing: " + Boolean.toString(mIsProcessing));
-//                            showDebug("mTimerAndLivenessIsFinished: " + Boolean.toString(mTimerFDAndLivenessIsFinished));
+                            if (!mTemperatureScanDone) {
+                                /**
+                                 * scan temperature first
+                                 */
+                                scanTemperatureOnThread();
+                            } else {
+
+                                mSpeakScanningTemperature = false;
+                                stopStandbyTimer();
+                                screenOn();
+
+                                if (mTemperatureDelayNextProcess) {
+                                    drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                                } else {
+
+                                    float temperature = -999.0f;
+                                    for (float t : mTemperatures) {
+                                        if (t > temperature) temperature = t;
+                                    }
+
+                                    float currentTh = Prefs.getFloat(PREF_THRESHOLD_TEMPERATURE, 37.0f);
+                                    if (temperature > currentTh) {
+                                        /**
+                                         * Too hot, sick!
+                                         */
+                                        displayToastError(null, "Suhu tubuh diatas normal " + temperature + "\u2103");
+                                        speakTemperatureHigh();
+                                        mTemperatureDelayNextProcess = true;
+                                        delayedTemperatureNextProcess();
+                                    } else if (temperature < mThresholdTemperatureLow) {
+                                        /**
+                                         * it's cold like ice, do nothing
+                                         */
+                                        displayToastError(null, "Suhu tubuh dibawah normal " + temperature + "\u2103");
+                                        mTemperatureDelayNextProcess = true;
+                                        delayedTemperatureNextProcess();
+                                    } else {
+                                        /**
+                                         * normal temperature, proceed
+                                         */
+                                        displayToastSuccess("Suhu tubuh normal " + temperature + "\u2103");
+
+                                        mFaceInArea = true;
+
+                                        int Y = round(bb_left_top[1]) - 120; //round(DeviceDimensionsHelper.convertDpToPixel(bb_left_top[1], mContext));
+                                        if (startAnim) {
+                                            showScanAnim(Y);
+                                            clearBB();
+                                        } else {
+                                            drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                                        }
+
+//                                        if (mRequestLiveness)
+//                                        /**
+//                                         * Once flag mRequestLiveness set to TRUE,
+//                                         * we will keep request Liveness Score until reach Counter threshold (default=10 times)
+//                                         */
+//                                            startLivenessThread();
+
+                                        if (!mIsProcessing && mTimerFDAndLivenessIsFinished) {
+                                            /**
+                                             * at first, we request liveness detection
+                                             * and in the same time we run Face Detection waiting timer
+                                             * This will trigger Counter racing between Face Detection Timeout
+                                             * and Liveness Counter by set flag mRequestLiveness = TRUE
+                                             * and call StartFDTimer function
+                                             */
+                                            showDebug("mIsProcessing is false and TimerLiveness finished");
+                                            mTimerFDAndLivenessIsFinished = false;
+                                            startFDTimer();
+                                            mFaceLivenessStatus = "NA";
+                                            mRequestLiveness = true;
+                                        } else {
+                                            /**
+                                             * do nothing since:
+                                             * 1. Liveness Detection is on going, or
+                                             * 2. Attendance Process is on going.
+                                             */
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                     } else {
+                        /**
+                         * Face is not in Detection Area
+                         */
                         mFaceInArea = false;
+                        mTemperatureScanDone = false;
+                        mTemperatures.clear();
+                        mSpeakScanningTemperature = false;
                         drawBB(Color.WHITE, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
                         hideScanAnim();
                         startStandbyTimer();
@@ -3811,6 +4042,37 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         }, new Handler(handlerThread.getLooper()));
 
+    }
+
+    private boolean mSpeakScanningTemperature = false;
+    private void scanTemperatureOnThread() {
+        if(!Is_Thermal_Supported) return;
+        if(mDeviceInterface==null) {
+            showDebug("Device Thermal is not connected");
+            return;
+        }
+        if(mTemperatures.size()>=mThermalScanCounter) {
+            mTemperatureScanDone = true;
+            return;
+        }
+        if(!mSpeakScanningTemperature) {
+            speakScanningTemperature();
+            mSpeakScanningTemperature = true;
+        }
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                scanTemperature();
+            }
+        });
+        thread.start();
+    }
+
+    private SimpleBluetoothDeviceInterface mDeviceInterface;
+    private BluetoothManager mBluetoothManager;
+    private void scanTemperature() {
+        // Let's send a message to request temperature
+        mDeviceInterface.sendMessage("o");
     }
 
     private void drawBB(int color,
@@ -3985,7 +4247,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     protected synchronized void runInBackground(final Runnable r) {
         if (mHandlerMain != null) {
             mHandlerMain.post(r);
-//            mThreadMainStatus = THREAD_RUN;
         }
     }
 

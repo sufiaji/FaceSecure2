@@ -1786,10 +1786,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         rparams.put("thumb", encodedFile);
         rparams.put("threshold", mThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        client.setResponseTimeout(3000);
+
+//        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+//        client.setResponseTimeout(mResponseTimeout);
+//        client.setConnectTimeout(mConnectTimeout);
+
+//        client.setMaxRetriesAndTimeout(5, 3000);
+//        client.setResponseTimeout(5000);
+//        client.setConnectTimeout(5000);
+
         showDebug(url);
         client.get(url, rparams, new AsyncHttpResponseHandler() {
             @Override
@@ -1803,7 +1808,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     boolean emptyEncoding = false;
                     try {
                         String str = new String(responseBody);
-                        if(str.equalsIgnoreCase("empty encoding"))
+                        if(str.contains("empty encoding"))
                             emptyEncoding = true;
                         JSONObject jsonResponse = new JSONObject(str);
                         int numel = 3;
@@ -1870,9 +1875,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             /**
                             No face match. Quit.
                              */
-                            speakFeedback("Tidak dikenal.");
-                            displayBottomMessageUnknown();
-                            showDebug("No face match");
+//                            speakFeedback("Tidak dikenal.");
+                            if(emptyEncoding) {
+                                showDebug("No record on DB");
+                                displayToastError(null, "Tidak ada record di database");
+                                delayedFinishProcessFlag();
+                            } else {
+                                displayToastError(null, "Tidak dikenal.");
+                                speakFeedback("Tidak dikenal.");
+                                showDebug("No face match");
+                                displayBottomMessageUnknown();
+                            }
                             hideProgressSpinKit();
                             hideTextProgress();
                             hideScanAnim();

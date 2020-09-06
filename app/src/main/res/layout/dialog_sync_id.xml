@@ -38,13 +38,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Atur IP Server"/>
+            android:text="Atur IP Server dan Port"/>
 
         <EditText
             android:id="@+id/edt_ip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="contoh: 192.168.100.13"/>
+            android:hint="contoh IP: 192.168.100.13"/>
+
+        <EditText
+            android:id="@+id/edt_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="contoh Port: 5000"/>
 
     </LinearLayout>
 

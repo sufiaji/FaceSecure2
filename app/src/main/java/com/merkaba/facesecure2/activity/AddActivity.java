@@ -325,13 +325,17 @@ public class AddActivity extends AppCompatActivity {
         String ip = Prefs.getString(MainActivity.PREF_DB_IP, MainActivity.DEFAULT_IP);
         String url = MainActivity.URL_HTTP + ip + MainActivity.URL_POST_NEW_USER;
         AsyncHttpClient client = new AsyncHttpClient();
+
         client.setConnectTimeout(1000);
         client.setMaxRetriesAndTimeout(2, 1000);
-        client.setResponseTimeout(3000);
+        client.setResponseTimeout(5000);
+
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", nik);
         rparams.add("name", name);
         rparams.put("thumb", encodedFile);
+        rparams.put("not_face", "");
+
         String createdAtNow = new DateUtils("-").getCurrentDate();
         String createdOnNow = new DateUtils("-").getCurrentTime();
         final long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);

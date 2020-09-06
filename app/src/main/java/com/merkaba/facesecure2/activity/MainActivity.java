@@ -201,15 +201,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     public static final String NA = "na";
     public static final String DEFAULT_IP = "0.0.0.0:0000";
-//    private static final String THREAD_DESTROYED = "destroyed";
-//    private static final String THREAD_CREATED = "created";
-//    private static final String THREAD_RUN = "running";
     public static final int ENCODING_LENGTH = 128;
     public static final float DELTA_X_FACE = 0.4f;
     public static final float DELTA_Y_FACE = 0.6f;
     public static final String CARRIAGE_RETURN = System.getProperty("line.separator");
-
-//    private final int mSpeakCounterMax = 5;
 
     // Flips the camera-preview frames vertically before sending them into FrameProcessor to be
     // processed in a MediaPipe graph, and flips the processed frames back when they are displayed.
@@ -327,6 +322,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mSmtpReceiver = "receiver@email.com";
     private String mSmtpEmailTime = "23:45";
     private boolean mSendMail = false;
+
+    private boolean mIsCloud = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1214,6 +1211,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         resetLivenessVariables();
         showDebug("FD TIMER stopped");
         stopStandbyTimer();
+        mIsProcessing = false; ///////// >>>>>>>>> add to fix bug (hopefully)
     }
 
     private void startProgram() {
@@ -1782,21 +1780,18 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(croppedBitmap);
         String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
         String url = URL_HTTP + mIpAndPort + URL_GET_PREDICTION;
+
         RequestParams rparams = new RequestParams();
         rparams.put("thumb", encodedFile);
         rparams.put("threshold", mThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
 
-//        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-//        client.setResponseTimeout(mResponseTimeout);
-//        client.setConnectTimeout(mConnectTimeout);
-
-//        client.setMaxRetriesAndTimeout(5, 3000);
-//        client.setResponseTimeout(5000);
-//        client.setConnectTimeout(5000);
+        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setResponseTimeout(mResponseTimeout);
+        client.setConnectTimeout(mConnectTimeout);
 
         showDebug(url);
-        client.get(url, rparams, new AsyncHttpResponseHandler() {
+        client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if(statusCode==200) {
@@ -1915,7 +1910,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         displayBottomMessageError(null, "Server message: " + message);
                         hideProgressSpinKit();
                     } catch (JSONException e) {
-                        displayToastError(null, "Unknown error.");
+                        displayBottomMessageError(null, "Terjadi kesalahan.");
                         hideProgressSpinKit();
                         e.printStackTrace();
                     }
@@ -1924,7 +1919,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     showDebug("Statuscode: " + Integer.toString(statusCode));
                     showDebug("Message: " + error.toString());
                     displayBottomMessageError(null, "Koneksi bermasalah dengan server.");
-//                mIsProcessing = false;
                     hideProgressSpinKit();
                 }
                 hideScanAnim();
@@ -2168,8 +2162,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
          */
         String url = URL_HTTP + mIpAndPort + URL_GET_LAST_ATTENDANCE;
         AsyncHttpClient client = new AsyncHttpClient();
-//        client.setMaxRetriesAndTimeout(2, 1000);
-//        client.setResponseTimeout(5000);
         client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
         client.setResponseTimeout(mResponseTimeout);
         client.setConnectTimeout(mConnectTimeout);
@@ -2957,8 +2949,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //        hideBlurBackground();
         stopListeningVoiceCommand();
         dismissAttendanceConfirm();
-
         resetSpeechRecognizerUIThread();
+
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
         final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
@@ -3329,9 +3321,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         NoboButton btnCancel = dialogView.findViewById(R.id.btn_sync_cancel);
         final EditText edtSync = dialogView.findViewById(R.id.edt_sync);
         final EditText edtIp = dialogView.findViewById(R.id.edt_ip);
+        final EditText edtPort = dialogView.findViewById(R.id.edt_port);
         edtSync.setText(Integer.toString(Prefs.getInt(PREF_SYNC_TIMEOUT, 30)));
         String[] ip = mIpAndPort.split(":");
         edtIp.setText(ip[0]);
+        if(ip.length==2)
+            edtPort.setText(ip[1]);
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -3341,7 +3336,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     return;
                 }
                 displayProgressSpinKit();
-                String finalTextIp = textIp + ":" + SERVER_PORT;
+                String textPort = edtPort.getText().toString().trim();
+                String finalTextIp_ = textIp;
+                if(!textPort.isEmpty())
+                   finalTextIp_  = textIp + ":" + textPort; //SERVER_PORT;
+                final String finalTextIp = finalTextIp_;
                 // ping the address
                 AsyncHttpClient client = new AsyncHttpClient();
                 client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
@@ -3784,7 +3783,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             showScanAnim(Y);
                             clearBB();
                         } else {
-                            drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                            if(mFaceLivenessStatus==FACE_FAKE)
+                                drawBB(Color.RED, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
+                            else
+                                drawBB(Color.GREEN, bb_left_top, bb_right_top, bb_right_bottom, bb_left_bottom);
                         }
                         stopStandbyTimer();
 //                        showDebug("Put on for Screen...");

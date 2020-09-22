@@ -93,10 +93,12 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-java:3.11.0'
     // Bitmap utilities
     implementation 'com.pranavpandey.android:dynamic-utils:3.2.1'
+
     // Build off of nightly TensorFlow Lite
-    implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
-    implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
-    implementation('org.tensorflow:tensorflow-lite-support:0.0.0-nightly') { changing = true }
+//    implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
+//    implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
+//    implementation('org.tensorflow:tensorflow-lite-support:0.0.0-nightly') { changing = true }
+
     // custom fab & fam
 //    implementation 'com.github.clans:fab:1.6.4'
     implementation 'com.github.hannesa2:FloatingActionButton:2.3.2'

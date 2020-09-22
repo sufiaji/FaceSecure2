@@ -20,7 +20,6 @@ import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,7 +64,6 @@ import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.github.clans.fab.FloatingActionButton;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.ybq.android.spinkit.SpinKitView;
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.gson.Gson;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
@@ -163,6 +161,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     public static final String URL_GET_PING = "/api/v1/facesecure/ping/";
     public static final String URL_GET_PREDICTION = "/api/v1/facesecure/recognize/";
+    public static final String URL_AUTO_MODE_ATTENDANCE = "/api/v1/facesecure/autoattendance/";
     public static final String URL_POST_NEW_USER = "/api/v1/facesecure/user/";
     public static final String URL_POST_ATTENDANCE = "/api/v1/facesecure/attendance/";
     public static final String URL_POST_UNSENT_ATTENDANCES = "/api/v1/facesecure/attendances/";
@@ -286,7 +285,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private List<DetectionProto.Detection> mDetectionVector;
     private Bitmap mCroppedBitmap = null;
     private int mTensorImageSize = 640;
-    private String mIpAndPort;
+    public static String oIpAndPort;
     private int mAutoTimeoutMinutes = 59; // 60 minutes
     private int mAutoTimeoutHours = 0; // 0 hour
     private int mVoiceCommandWaitingTimer = 10;
@@ -300,7 +299,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private FloatingActionButton fabStart;
 
     private int mDelayTimeBetweenProcess = 5; //5 detik
-    private float mThresholdDistanceFaceEmbedding = 0.5f;
+    public static float oThresholdDistanceFaceEmbedding = 0.5f;
     private float mThresholdLiveness = 0.1f; // smaller more straight, real face has small value like 0.01, fake has big value like 0.70
     public static int mLivenessCounterMax = 10; // take 10 frames to decide fake/real
     public float THRESHOLD_REAL_NUM_FRAME_PERCENTAGE = 0.8f; // if 80% of total frame within time range are real, then it is REAL
@@ -356,14 +355,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         AndroidAssetUtil.initializeNativeAssetManager(this);
         // get data from preference so that we dont need to get it everytime
         mFdTimeout = Prefs.getInt(PREF_FD_TIMEOUT, 3);
-        mIpAndPort = Prefs.getString(MainActivity.PREF_DB_IP, DEFAULT_IP);
+        oIpAndPort = Prefs.getString(MainActivity.PREF_DB_IP, DEFAULT_IP);
         // default is AutoMode with 60 minutes timeout
         mAutoMode = Prefs.getBoolean(PREF_AUTO_MODE, true);
         mAutoTimeoutMinutes = Prefs.getInt(PREF_AUTO_TIMEOUT_MINUTE, 59); // minutes
         mAutoTimeoutHours = Prefs.getInt(PREF_AUTO_TIMEOUT_HOUR, 0);
         mVoiceCommand = Prefs.getBoolean(PREF_VCOMMAND, true);
         mVoiceFeedback = Prefs.getBoolean(PREF_VFEEDBACK, true);
-        mThresholdDistanceFaceEmbedding = Prefs.getFloat(PREF_THRESHOLD_FACE_DISTANCE, 0.5f);
+        oThresholdDistanceFaceEmbedding = Prefs.getFloat(PREF_THRESHOLD_FACE_DISTANCE, 0.5f);
         mThresholdLiveness = Prefs.getFloat(PREF_THRESHOLD_LIVENESS, 0.1f);
         mLocation = Prefs.getString(PREF_TERMINAL_LOCATION, "00");
         mSyncTimeout = Prefs.getInt(PREF_SYNC_TIMEOUT, 30);
@@ -1431,10 +1430,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mDownloadUser = false;
         AsyncHttpClient client = new AsyncHttpClient();
 //        client.setMaxRetriesAndTimeout(3, 1000);
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        String url = URL_HTTP + mIpAndPort + URL_GET_ALL_USER;
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+        String url = URL_HTTP + oIpAndPort + URL_GET_ALL_USER;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -1454,6 +1453,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         String userId = jo.getString("user_id");
                         String name = jo.getString("name");
                         String createdAt = jo.getString("created_at");
+                        String division = jo.getString("division");
+                        String sThumb = jo.getString("thumb");
+                        String sFull = jo.getString("image");
+                        Bitmap thumb = Utils.string64ToBitmap(sThumb);
+                        Bitmap full = Utils.string64ToBitmap(sFull);
                         SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                         Date dt = sdf.parse(createdAt);
                         int epoch = (int) dt.getTime();
@@ -1463,7 +1467,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             mDbHelper.setUserLocalFlag(userId, " ");
                             continue;
                         }
-                        User user = new User(userId, name, epoch, " ");
+                        User user = new User(userId, name, division, epoch, " ", thumb, full);
                         long s = mDbHelper.insertUser(user);
                     }
                     // delete local user which is left intact...
@@ -1487,10 +1491,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void downloadEncoding() {
         mDownloadEncoding = false;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        String url = URL_HTTP + mIpAndPort + URL_GET_ALL_ENCODING;
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+        String url = URL_HTTP + oIpAndPort + URL_GET_ALL_ENCODING;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -1530,13 +1534,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if(attendances.size()<=0) return;
         mUploadAttendance = false;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
 //        client.setResponseTimeout(mResponseTimeout);
 //        client.setConnectTimeout(mConnectTimeout);
         RequestParams rparams = new RequestParams();
         String jAttendances = new Gson().toJson(attendances);
         rparams.add("attendances", jAttendances);
-        String url = URL_HTTP + mIpAndPort + URL_POST_UNSENT_ATTENDANCES;
+        String url = URL_HTTP + oIpAndPort + URL_POST_UNSENT_ATTENDANCES;
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -1644,10 +1648,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void doPingAndSync() {
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        String url = URL_HTTP + mIpAndPort + URL_GET_PING;
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+        String url = URL_HTTP + oIpAndPort + URL_GET_PING;
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
@@ -1662,10 +1666,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
-    private int mResponseTimeout = 3000;
-    private int mConnectTimeout = 2000;
-    private int mMaxRetries = 3;
-    private int mMaxRetryTimeout = 2000;
+    public static final int RESPONSE_TIMEOUT = 3000;
+    public static final int CONNECT_TIMEOUT = 2000;
+    public static final int MAX_RETRIES = 3;
+    public static final int MAX_RETRIES_TIMEOUT = 2000;
 
     private void doPingAndPost(final DetectionProto.Detection detection) {
         showDebug("doPingAndPost");
@@ -1673,10 +1677,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         startAnim = true;
         displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        String url = URL_HTTP + mIpAndPort + URL_GET_PING;
+
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+
+        String url = URL_HTTP + oIpAndPort + URL_GET_PING;
         showDebug(url);
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
@@ -1718,7 +1724,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             hideScanAnim();
             return;
         }
-        Prediction prediction = new Prediction(encoding, encodings, mThresholdDistanceFaceEmbedding);
+        Prediction prediction = new Prediction(encoding, encodings, oThresholdDistanceFaceEmbedding);
         prediction.process();
         String userMatch = prediction.getMatchUserId();
         float dist = prediction.getMatchDistance();
@@ -1731,7 +1737,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //            showDebug(msg);
         }
         long stop = SystemClock.uptimeMillis();
-//        showDebug("Timecost: " + (stop-start));
         if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
             // debug is on and no need post attendance then quit
             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
@@ -1772,6 +1777,122 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         }
     }
 
+    private void postAutoModeOnline(final Bitmap croppedBitmap) {
+//        @param thumb: cropped & aligned face image, in base64 String
+//        @param threshold: threshold distance
+//        @param minute_threshold: minimum time allowed for auto-attendance (in minutes)
+//        @param created_at: date of attendance, string
+//        @param created_on: time of attendance, string
+//        @param location: 2 digit string location
+        String createdAt = new DateUtils("-").getCurrentDate();
+        String createdOn = new DateUtils("-").getCurrentTime();
+        final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
+        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(croppedBitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
+        byte[] byteArray = Utils.getBitmapAsByteArray(bitmapRescale);
+        String encodedThumb = Utils.getByteArrayAsString64(byteArray);
+
+        RequestParams rparams = new RequestParams();
+        rparams.put("thumb", encodedThumb);
+        rparams.put("threshold", oThresholdDistanceFaceEmbedding);
+        Long autoTimeout = Long.valueOf((mAutoTimeoutHours * 60) + mAutoTimeoutMinutes);
+        rparams.put("minute_threshold", autoTimeout);
+        rparams.put("created_at", createdAt);
+        rparams.put("created_on", createdOn);
+        rparams.put("location", mLocation);
+
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+
+        String url = URL_HTTP + oIpAndPort + URL_AUTO_MODE_ATTENDANCE;
+        showDebug(url);
+        client.post(url, rparams, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                String response = new String(responseBody);
+
+
+                if(statusCode==200) {
+                    try {
+                        JSONObject jo = new JSONObject(response);
+                        String resultUserid = jo.getString("user_id");
+                        String resultName = jo.getString("name");
+                        String resultStatus = jo.getString("status");
+                        showBlurBackground();
+                        if (resultStatus.equalsIgnoreCase(STRING_CLOCK_IN)) {
+                            displayBottomAttendanceOkUIThread(mBitmapBig, resultName, resultUserid, STRING_CLOCK_IN, true);
+                            speakWelcome(resultName);
+                        } else {
+                            displayBottomAttendanceOkUIThread(mBitmapBig, resultName, resultUserid, STRING_CLOCK_OUT, true);
+                            speakGoodbye(resultName);
+                        }
+
+                        Attendance attendance = new Attendance(resultUserid, createdDateTime, resultStatus, mLocation, croppedBitmap, "");
+                        insertAttendance(attendance);
+                        hideProgressSpinKit();
+                        hideTextProgress();
+                        hideScanAnim();
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                } else if (statusCode==201) {
+                    // still within timerange, not allowed to post
+//                    return {'user_id':userId,
+//                            'name':user_data['name'],
+//                            'last_created_at':return_data['created_at'],
+//                            'last_created_on':return_data['created_on'],
+//                            'delta_time':delta_time}, 201
+                    String dateNow = new DateUtils("-").getCurrentDate();
+//                    String createdOnNow = new DateUtils("-").getCurrentTime();
+                    try {
+                        JSONObject jo = new JSONObject(response);
+                        String userId = jo.getString("user_id");
+                        String name = jo.getString("name");
+                        String timeDelta = jo.getString("delta_time");
+                        String[] timeSplit = timeDelta.split(":");
+                        int h = Integer.parseInt(timeSplit[0]);
+                        int m = Integer.parseInt(timeSplit[1]);
+                        int s = Integer.parseInt(timeSplit[2]);
+
+                        String msg = "NIK: " + userId + CARRIAGE_RETURN + "Nama: " + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah";
+                        if(h!=0) {
+                            msg = msg + h + " jam";
+                        }
+                        if(m!=0) {
+                            msg = msg + ", " + m + " menit";
+                        }
+                        if(s!=0) {
+                            msg = msg + ", " + s + " detik";
+                        }
+                        msg = msg + ".";
+
+                        displayBottomMessageWarning(msg);
+                        hideProgressSpinKit();
+                        hideScanAnim();
+                        speakNoProcess();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+
+                displayToastError(null, "Koneksi dengan server bermasalah, berganti ke mode offline, mohon tunggu...");
+                predictOffline(croppedBitmap);
+
+            }
+        });
+    }
+
+
     private Bitmap mBitmapBig2;
     private void predictOnline(final Bitmap croppedBitmap) {
         Log.d(TAG, "Entering Predict online");
@@ -1779,21 +1900,67 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         final long start = SystemClock.uptimeMillis();
         byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(croppedBitmap);
         String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
-        String url = URL_HTTP + mIpAndPort + URL_GET_PREDICTION;
+        String url = URL_HTTP + oIpAndPort + URL_GET_PREDICTION;
 
         RequestParams rparams = new RequestParams();
         rparams.put("thumb", encodedFile);
-        rparams.put("threshold", mThresholdDistanceFaceEmbedding);
+        rparams.put("threshold", oThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
 
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
 
         showDebug(url);
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+
+                String str = new String(responseBody);
+                try {
+                    if (statusCode == 200) {
+                        // we have matched person
+
+                        String msg = ">>> ";
+                        String name = "";
+                        String user_id = "";
+                        String firstName = "";
+                        String firstUserid = "";
+                        JSONObject jsonResponse = new JSONObject(str);
+                        int numel = 3;
+                        for (int i = 0; i < numel; i++) {
+                            JSONObject jsonObject = jsonResponse.getJSONObject(Integer.toString(i + 1));
+                            user_id = jsonObject.getString("user_id");
+                            name = jsonObject.getString("name");
+                            String dist = jsonObject.getString("distance");
+                            msg = msg + user_id + ":" + name + ":" + dist + ", ";
+                            if (i == 0) {
+                                firstName = name;
+                                firstUserid = user_id;
+                            }
+                        }
+                        if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
+                            hideScanAnim();
+                            hideProgressSpinKit();
+                            hideTextProgress();
+                            displayBottomMessageSuccess("Halo " + firstName + " (NIK: " + firstUserid + ")");
+                            speakFeedback("Halo " + firstName);
+                        }
+                        showDebug(msg);
+
+                    } else if (statusCode == 201) {
+                        // database is empty encoding
+
+
+                    } else if (statusCode == 202) {
+                        // no match (empty return data)
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                //
+                //
+                //
                 if(statusCode==200) {
                     String msg = ">>> ";
                     String name = "";
@@ -1802,7 +1969,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     String firstUserid = "";
                     boolean emptyEncoding = false;
                     try {
-                        String str = new String(responseBody);
+//                        String str = new String(responseBody);
                         if(str.contains("empty encoding"))
                             emptyEncoding = true;
                         JSONObject jsonResponse = new JSONObject(str);
@@ -1818,6 +1985,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 firstUserid = user_id;
                             }
                         }
+
                     } catch (JSONException e) {
                         e.printStackTrace();
 //                        showDebug("JSON Exception: " + e.toString());
@@ -1838,7 +2006,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
                             // debug is on and no need post attendance then quit
                             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
-//                            mIsProcessing = false;
                             hideScanAnim();
                             hideProgressSpinKit();
                             hideTextProgress();
@@ -2160,11 +2327,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         /**
          * GET LAST ATTENDANCE
          */
-        String url = URL_HTTP + mIpAndPort + URL_GET_LAST_ATTENDANCE;
+        String url = URL_HTTP + oIpAndPort + URL_GET_LAST_ATTENDANCE;
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", userId);
         showDebug(url);
@@ -2186,7 +2353,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             String strDateAttendance = jo.getString("created_at"); //sep[0].trim();
                             String strTimeAttendance = jo.getString("created_on"); //sep[1].trim();
                             String strAttDateTime = strDateAttendance + " " + strTimeAttendance;
-                            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+//                            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                            DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
                             Date lastAttDateTime = dateFormat.parse(strAttDateTime);
                             Long lastAt_millis = lastAttDateTime.getTime();
                             Date dateNow = Calendar.getInstance().getTime(); // get now time
@@ -2260,16 +2428,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
         final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
-        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(croppedBitmap, Utils.IMG_MAX_WIDTH);
+        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(croppedBitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
         byte[] byteArray = Utils.getBitmapAsByteArray(bitmapRescale);
         String encodedThumb = Utils.getByteArrayAsString64(byteArray);
 
         AsyncHttpClient client = new AsyncHttpClient();
-//        client.setMaxRetriesAndTimeout(2, 1000);
-//        client.setResponseTimeout(5000);
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", userId);
         rparams.add("status", status);
@@ -2277,7 +2443,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         rparams.add("created_at", createdAt);
         rparams.add("created_on", createdOn);
         rparams.put("thumb", encodedThumb);
-        String url = URL_HTTP + mIpAndPort + URL_POST_ATTENDANCE;
+        String url = URL_HTTP + oIpAndPort + URL_POST_ATTENDANCE;
         showDebug("Post to URL: " + url);
 
         client.post(url, rparams, new AsyncHttpResponseHandler() {
@@ -2550,7 +2716,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         ck3.setChecked(mNoPostAttendance);
         if(ck3.isChecked()) ck2.setChecked(false);
         final EditText edtFaceDistance = dialogView.findViewById(R.id.edt_threshold_face_distance);
-        edtFaceDistance.setText(Float.toString(mThresholdDistanceFaceEmbedding));
+        edtFaceDistance.setText(Float.toString(oThresholdDistanceFaceEmbedding));
         final EditText edtThresholdLiveness = dialogView.findViewById(R.id.edt_threshold_liveness);
         edtThresholdLiveness.setText(Float.toString(mThresholdLiveness));
         final EditText edtDelayedFinish = dialogView.findViewById(R.id.edt_delayed_finish);
@@ -2587,8 +2753,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 mPostAttendanceDuringDebug = ck2.isChecked();
                 mNoPostAttendance = ck3.isChecked();
                 if(!edtFaceDistance.getText().toString().trim().isEmpty()) {
-                    mThresholdDistanceFaceEmbedding = Float.parseFloat(edtFaceDistance.getText().toString().trim());
-                    Prefs.putFloat(PREF_THRESHOLD_FACE_DISTANCE, mThresholdDistanceFaceEmbedding);
+                    oThresholdDistanceFaceEmbedding = Float.parseFloat(edtFaceDistance.getText().toString().trim());
+                    Prefs.putFloat(PREF_THRESHOLD_FACE_DISTANCE, oThresholdDistanceFaceEmbedding);
                 }
                 if(!edtThresholdLiveness.getText().toString().trim().isEmpty()) {
                     mThresholdLiveness = Float.parseFloat(edtThresholdLiveness.getText().toString().trim());
@@ -2737,14 +2903,11 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
         // the countdown
         mCountDownAnimation = new CountDownAnimation(textCountdown, mVoiceCommandWaitingTimer);
-        mCountDownAnimation.setCountDownListener(new CountDownAnimation.CountDownListener() {
-            @Override
-            public void onCountDownEnd(CountDownAnimation animation) {
-                showDebug("Counter done.");
-                onAttendanceConfirmCounterEnd();
-                dismissAttendanceConfirm();
+        mCountDownAnimation.setCountDownListener(animation -> {
+            showDebug("Counter done.");
+            onAttendanceConfirmCounterEnd();
+            dismissAttendanceConfirm();
 
-            }
         });
 
         // set name and nik
@@ -2789,20 +2952,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mCountDownAnimation.start();
 
         ImageView btnClockin = findViewById(R.id.image_clock_in);
-        btnClockin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onBottomSheetButtonClick(nik, name, STRING_CLOCK_IN, online, face);
-            }
-        });
+        btnClockin.setOnClickListener(view -> onBottomSheetButtonClick(nik, name, STRING_CLOCK_IN, online, face));
 
         ImageView btnClockout = findViewById(R.id.image_clock_out);
-        btnClockout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                onBottomSheetButtonClick(nik, name, STRING_CLOCK_OUT, online, face);
-            }
-        });
+        btnClockout.setOnClickListener(view -> onBottomSheetButtonClick(nik, name, STRING_CLOCK_OUT, online, face));
     }
 
     private void stopCountdownTimer() {
@@ -3323,7 +3476,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         final EditText edtIp = dialogView.findViewById(R.id.edt_ip);
         final EditText edtPort = dialogView.findViewById(R.id.edt_port);
         edtSync.setText(Integer.toString(Prefs.getInt(PREF_SYNC_TIMEOUT, 30)));
-        String[] ip = mIpAndPort.split(":");
+        String[] ip = oIpAndPort.split(":");
         edtIp.setText(ip[0]);
         if(ip.length==2)
             edtPort.setText(ip[1]);
@@ -3343,15 +3496,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 final String finalTextIp = finalTextIp_;
                 // ping the address
                 AsyncHttpClient client = new AsyncHttpClient();
-                client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-                client.setResponseTimeout(mResponseTimeout);
-                client.setConnectTimeout(mConnectTimeout);
+                client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+                client.setResponseTimeout(RESPONSE_TIMEOUT);
+                client.setConnectTimeout(CONNECT_TIMEOUT);
                 String url = URL_HTTP + finalTextIp + URL_GET_PING;
                 client.get(url, new AsyncHttpResponseHandler() {
                     @Override
                     public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                         Prefs.putString(PREF_DB_IP, finalTextIp);
-                        mIpAndPort = finalTextIp;
+                        oIpAndPort = finalTextIp;
                         Prefs.putString(PREF_DB_IP, finalTextIp);
                         String textTimeout = edtSync.getText().toString().trim();
                         mSyncTimeout = Integer.parseInt(textTimeout);
@@ -3605,10 +3758,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         startAnim = true;
 //        displayProgressSpinKit();
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
-        String url = URL_HTTP + mIpAndPort + URL_GET_PING;
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
+        String url = URL_HTTP + oIpAndPort + URL_GET_PING;
         showDebug(url);
         client.get(url, new AsyncHttpResponseHandler() {
             @Override
@@ -3634,12 +3787,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void requestLivenessToServer(String faceString) {
         AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(mMaxRetries, mMaxRetryTimeout);
-        client.setResponseTimeout(mResponseTimeout);
-        client.setConnectTimeout(mConnectTimeout);
+        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(RESPONSE_TIMEOUT);
+        client.setConnectTimeout(CONNECT_TIMEOUT);
         RequestParams rparams = new RequestParams();
         rparams.put("thumb", faceString);
-        String url = URL_HTTP + mIpAndPort + URL_GET_LIVENESS;
+        String url = URL_HTTP + oIpAndPort + URL_GET_LIVENESS;
         showDebug(url);
         client.get(url, rparams, new AsyncHttpResponseHandler() {
             @Override
@@ -3978,7 +4131,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             stopStandbyTimerForProcess();
 
                             if(online) {
-                                predictOnline(croppedBitmap);
+                                if(mAutoMode)
+                                    predictOnline(croppedBitmap);
+                                else
+                                    postAutoModeOnline(croppedBitmap); // NEW !!!
                             } else {
                                 predictOffline(croppedBitmap);
                             }

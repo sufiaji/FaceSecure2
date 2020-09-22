@@ -3,11 +3,7 @@ package com.merkaba.facesecure2.activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.os.Bundle;
 import android.os.Handler;
@@ -23,9 +19,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.CheckBox;
+import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
@@ -35,7 +30,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
-import com.github.ybq.android.spinkit.SpinKitView;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
@@ -44,10 +38,8 @@ import com.google.mediapipe.framework.AndroidAssetUtil;
 import com.google.mediapipe.framework.PacketGetter;
 import com.google.mediapipe.glutil.EglManager;
 import com.jackandphantom.circularimageview.CircleImage;
-import com.jpardogo.android.googleprogressbar.library.GoogleProgressBar;
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
-import com.loopj.android.http.Base64;
 import com.loopj.android.http.RequestParams;
 import com.merkaba.facesecure2.R;
 import com.merkaba.facesecure2.model.Encoding;
@@ -59,20 +51,11 @@ import com.merkaba.facesecure2.utils.Utils;
 import com.merkaba.facesecure2.view.BottomSheetFragmentOk;
 import com.pixplicity.easyprefs.library.Prefs;
 import com.pranavpandey.android.dynamic.toasts.DynamicToast;
-import com.yarolegovich.lovelydialog.LovelyTextInputDialog;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.gpu.GpuDelegate;
-import org.tensorflow.lite.support.common.FileUtil;
+//import org.tensorflow.lite.Interpreter;
+//import org.tensorflow.lite.gpu.GpuDelegate;
+//import org.tensorflow.lite.support.common.FileUtil;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.MappedByteBuffer;
 import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
@@ -271,7 +254,6 @@ public class AddActivity extends AppCompatActivity {
         mHandlerThreadMain = new HandlerThread("inference");
         mHandlerThreadMain.start();
         mHandlerMain = new Handler(mHandlerThreadMain.getLooper());
-//        mThreadMainStatus = THREAD_CREATED;
     }
 
     public void onCancelClick(View view) {
@@ -294,14 +276,17 @@ public class AddActivity extends AppCompatActivity {
         dialog.setCancelable(false);
         final EditText edtNik = dialogView.findViewById(R.id.edt_nik);
         final EditText edtName = dialogView.findViewById(R.id.edt_name);
+        final EditText edtDivision = dialogView.findViewById(R.id.edt_division);
 
         dialog.setPositiveButton("Simpan", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String nik = edtNik.getText().toString().trim();
                 String name = edtName.getText().toString().trim();
+                String division = edtDivision.getText().toString().trim();
                 if(!nik.isEmpty() && !name.isEmpty()) {
-                    saveUser(nik, name, cropped, fullBitmap);
+//                    saveUser(nik, name, cropped, fullBitmap);
+                    doPingAndRecognize(nik, name, division, cropped, fullBitmap);
                 } else {
                     displayToastError(null, "NIK dan Nickname tidak boleh kosong");
                 }
@@ -316,59 +301,145 @@ public class AddActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void saveUser(String nik, String name, Bitmap cropped, Bitmap fullBitmap) {
-//        setBitmap(cropped);
+    private void doPingAndRecognize(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
         mProgressBar.setVisibility(View.VISIBLE);
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
-        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
-
-        String ip = Prefs.getString(MainActivity.PREF_DB_IP, MainActivity.DEFAULT_IP);
-        String url = MainActivity.URL_HTTP + ip + MainActivity.URL_POST_NEW_USER;
         AsyncHttpClient client = new AsyncHttpClient();
 
-        client.setConnectTimeout(1000);
-        client.setMaxRetriesAndTimeout(2, 1000);
-        client.setResponseTimeout(5000);
+        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
+        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
+
+        String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_GET_PING;
+        client.get(url, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                recognize(nik, name, division, cropped, fullBitmap);
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                saveUserOffline(nik, name, division, cropped, fullBitmap);
+
+            }
+        });
+    }
+
+    private void recognize(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+        Log.d(TAG, "Entering Predict online");
+
+        final long start = SystemClock.uptimeMillis();
+        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
+        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+        String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_GET_PREDICTION;
 
         RequestParams rparams = new RequestParams();
-        rparams.add("user_id", nik);
-        rparams.add("name", name);
         rparams.put("thumb", encodedFile);
-        rparams.put("not_face", "");
+        rparams.put("threshold", MainActivity.oThresholdDistanceFaceEmbedding);
+        AsyncHttpClient client = new AsyncHttpClient();
 
-        String createdAtNow = new DateUtils("-").getCurrentDate();
-        String createdOnNow = new DateUtils("-").getCurrentTime();
-        final long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
-        if(fullBitmap!=null) {
-            Bitmap scaledBitmap = Utils.scaleImageKeepAspectRatio(fullBitmap, 400);
-            byte[] byteArrayPhoto2 = Utils.getBitmapAsByteArray(scaledBitmap);
-            String encodedFile2 = Utils.getByteArrayAsString64(byteArrayPhoto2);
-            rparams.put("image", encodedFile2);
-        }
+        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
+        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
+
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                mProgressBar.setVisibility(View.GONE);
                 if(statusCode==200) {
-                    String message = "Data berhasil disimpan (NIK: " + nik + ", Nama: " + name + ")";
-                    displayBottomAttendanceOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, true);
+                    // we have match in database
+                    showDialogUpdate(nik, name, division, cropped, fullBitmap);
+                } else if(statusCode==201) {
+                    // db is empty
+                    saveUserOnline(nik, name, division, cropped, fullBitmap);
+                } else if(statusCode==202) {
+                    // no match, continue register
+                    saveUserOnline(nik, name, division, cropped, fullBitmap);
                 }
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                insertNewUser(nik, name, createdDateTimeNow, encodedFile);
+                saveUserOffline(nik, name, division, cropped, fullBitmap);
                 mProgressBar.setVisibility(View.GONE);
-                displayBottomAttendanceOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
+                displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
             }
         });
     }
 
-    private void insertNewUser(String nik, String name, long datetime, String face64String) {
+    private void showDialogUpdate(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_update_user, null);
+        builder.setView(dialogView);
+        builder.setCancelable(false);
+        final AlertDialog alertDialog = builder.show();
+
+        Button cancelButton = findViewById(R.id.btn_update_cancel);
+        cancelButton.setOnClickListener(view -> {
+            alertDialog.dismiss();
+        });
+
+        Button updateButton = findViewById(R.id.btn_update_update);
+        updateButton.setOnClickListener(view -> {
+            alertDialog.dismiss();
+            saveUserOnline(nik, name, division, cropped, fullBitmap);
+        });
+    }
+
+    private void saveUserOnline(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+
+        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
+        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+
+        Bitmap scaledBitmap = Utils.scaleImageKeepAspectRatio(fullBitmap, Utils.USER_IMAGE_MAX_WIDTH);
+        byte[] byteArrayPhoto2 = Utils.getBitmapAsByteArray(scaledBitmap);
+        String encodedFile2 = Utils.getByteArrayAsString64(byteArrayPhoto2);
+
+        String ip = Prefs.getString(MainActivity.PREF_DB_IP, MainActivity.DEFAULT_IP);
+        String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_POST_NEW_USER;
+        AsyncHttpClient client = new AsyncHttpClient();
+
+        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
+        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
+        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
+
+        RequestParams rparams = new RequestParams();
+        rparams.add("user_id", nik);
+        rparams.add("name", name);
+        rparams.put("thumb", encodedFile);
+        rparams.put("image", encodedFile2);
+
+        String createdAtNow = new DateUtils("-").getCurrentDate();
+        String createdOnNow = new DateUtils("-").getCurrentTime();
+        final long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
+
+        client.post(url, rparams, new AsyncHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                mProgressBar.setVisibility(View.GONE);
+                if(statusCode==200) {
+                    String message = "Data berhasil disimpan" + MainActivity.CARRIAGE_RETURN + "NIK: " + nik + MainActivity.CARRIAGE_RETURN + "Nama: " + name + ")";
+                    displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, true);
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                saveUserOffline(nik, name, division, cropped, fullBitmap);
+            }
+        });
+    }
+
+    private void saveUserOffline(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+
+        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
+        String face64String = Utils.getByteArrayAsString64(byteArrayPhoto);
+
+        String createdAtNow = new DateUtils("-").getCurrentDate();
+        String createdOnNow = new DateUtils("-").getCurrentTime();
+        long datetime = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
 
         if (!Python.isStarted()) {
             displayToastError(null, "Internal error, cannot start compiler engine");
-//            delayedFinishProcessFlag();
             return;
         }
         Python python = Python.getInstance();
@@ -376,19 +447,31 @@ public class AddActivity extends AppCompatActivity {
         PyObject ret = pythonFile.callAttr("encode", face64String);
         float[] encoding = ret.toJava(float[].class);
 
-        User user = new User(nik, name, datetime, "X");
-        mDbHelper.insertUser(user);
-
-        String encArray = "";
-        for(int i=0;i<encoding.length; i++) {
-            if(i==encoding.length-1) encArray = encArray + Float.toString(encoding[i]);
-            else encArray = encArray + Float.toString(encoding[i]) + ",";
+        User user = new User(nik, name, division, datetime, "X", cropped, fullBitmap);
+        long idUser = mDbHelper.insertUser(user);
+        if(idUser > 0) {
+            String encArray = "";
+            for(int i=0;i<encoding.length; i++) {
+                if(i==encoding.length-1) encArray = encArray + Float.toString(encoding[i]);
+                else encArray = encArray + Float.toString(encoding[i]) + ",";
+            }
+            Encoding encodingRecord = new Encoding(nik, encArray);
+            if(mDbHelper.insertEncoding(encodingRecord)>0) {
+                displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
+            } else {
+                // failed insert encoding so need to delete created User
+                mDbHelper.deleteUser(idUser);
+                displayToastError(null, "Gagal registrasi user baru secara offline");
+            }
+        } else {
+            // failed insert new user
+            displayToastError(null, "Gagal registrasi user baru secara offline");
         }
-        Encoding encodingRecord = new Encoding(nik, encArray);
-        mDbHelper.insertEncoding(encodingRecord);
+
     }
 
-    private void displayBottomAttendanceOk(Bitmap face, String name, String nik, String aType, boolean online) {
+    private void displayBottomRegistrationOk(Bitmap face, String name, String nik, String aType, boolean online) {
+        mProgressBar.setVisibility(View.GONE);
         BottomSheetFragmentOk dialog = new BottomSheetFragmentOk();
         dialog.setCancelable(false);
         Bundle bundle = new Bundle();
@@ -398,38 +481,27 @@ public class AddActivity extends AppCompatActivity {
         bundle.putString(MainActivity.ARGS_NICKNAME, name);
         bundle.putBoolean(MainActivity.ARGS_ONLINE_STATUS, online);
         dialog.setArguments(bundle);
-        dialog.show(getSupportFragmentManager(), "Attendance Ok");
+        dialog.show(getSupportFragmentManager(), "Registration Ok");
         final Handler handler  = new Handler();
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (dialog!=null) {
-                    dialog.dismiss();
-                    onBackPressed();
-                }
+        final Runnable runnable = () -> {
+            if (dialog!=null) {
+                dialog.dismiss();
+                onBackPressed();
             }
         };
         handler.postDelayed(runnable, 3000);
     }
 
     private void displayToastSuccess(String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                DynamicToast.makeSuccess(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
+        runOnUiThread(() -> DynamicToast.makeSuccess(getApplicationContext(), message, Toast.LENGTH_LONG).show());
     }
 
     private void displayToastError(Throwable throwable, String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(throwable!=null && mDebug == true) {
-                    DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
-                } else {
-                    DynamicToast.makeError(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
+        runOnUiThread(() -> {
+            if(throwable!=null && mDebug == true) {
+                DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
+            } else {
+                DynamicToast.makeError(getApplicationContext(), message, Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -437,136 +509,133 @@ public class AddActivity extends AppCompatActivity {
     private void processFrame(List<DetectionProto.Detection> detections) {
         mIsProcessing = true;
         final DetectionProto.Detection detection = detections.get(0);
-        runInBackground(new Runnable() {
-            @Override
-            public void run() {
-                //
-                float previewWidth = (float) mPreviewDisplayView.getWidth();
-                float previewHeight = (float) mPreviewDisplayView.getHeight();
-                // extract important keypoints
-                float[] left_eye_norm = {
-                        detection.getLocationData().getRelativeKeypoints(0).getX(),
-                        detection.getLocationData().getRelativeKeypoints(0).getY()
-                };
-                float[] right_eye_norm = {
-                        detection.getLocationData().getRelativeKeypoints(1).getX(),
-                        detection.getLocationData().getRelativeKeypoints(1).getY()
-                };
-                float[] left_ear_norm = {
-                        detection.getLocationData().getRelativeKeypoints(4).getX(),
-                        detection.getLocationData().getRelativeKeypoints(4).getY()
-                };
-                float[] right_ear_norm = {
-                        detection.getLocationData().getRelativeKeypoints(5).getX(),
-                        detection.getLocationData().getRelativeKeypoints(5).getY()
-                };
-                float[] mouth_norm = {
-                        detection.getLocationData().getRelativeKeypoints(3).getX(),
-                        detection.getLocationData().getRelativeKeypoints(3).getY()
-                };
-                // de-normalized against screen size & transform translate
-                float[] left_eye = {(left_eye_norm[0]*previewWidth), (left_eye_norm[1]*previewHeight)};
-                float[] right_eye = {(right_eye_norm[0]*previewWidth), (right_eye_norm[1]*previewHeight)};
-                float[] left_ear = {(left_ear_norm[0]*previewWidth), (left_ear_norm[1]*previewHeight)};
-                float[] right_ear = {(right_ear_norm[0]*previewWidth), (right_ear_norm[1]*previewHeight)};
-                float[] mouth = {(mouth_norm[0]*previewWidth), (mouth_norm[1]*previewHeight)};
-                final Bitmap bitmapCopy = Bitmap.createBitmap(
-                        (int)previewWidth,
-                        (int)previewHeight,
-                        Bitmap.Config.ARGB_8888);
-                final HandlerThread handlerThread = new HandlerThread("PixelCopier");
-                handlerThread.start();
-                PixelCopy.request(mPreviewDisplayView, bitmapCopy, new PixelCopy.OnPixelCopyFinishedListener() {
-                    @Override
-                    public void onPixelCopyFinished(int copyResult) {
-                        try {
-                            Log.d(TAG,"onPixelCopyFinished");
-                            mOriginalBitmap = bitmapCopy;
-                            long startTimeForReference = SystemClock.uptimeMillis();
+        runInBackground(() -> {
+            //
+            float previewWidth = (float) mPreviewDisplayView.getWidth();
+            float previewHeight = (float) mPreviewDisplayView.getHeight();
+            // extract important keypoints
+            float[] left_eye_norm = {
+                    detection.getLocationData().getRelativeKeypoints(0).getX(),
+                    detection.getLocationData().getRelativeKeypoints(0).getY()
+            };
+            float[] right_eye_norm = {
+                    detection.getLocationData().getRelativeKeypoints(1).getX(),
+                    detection.getLocationData().getRelativeKeypoints(1).getY()
+            };
+            float[] left_ear_norm = {
+                    detection.getLocationData().getRelativeKeypoints(4).getX(),
+                    detection.getLocationData().getRelativeKeypoints(4).getY()
+            };
+            float[] right_ear_norm = {
+                    detection.getLocationData().getRelativeKeypoints(5).getX(),
+                    detection.getLocationData().getRelativeKeypoints(5).getY()
+            };
+            float[] mouth_norm = {
+                    detection.getLocationData().getRelativeKeypoints(3).getX(),
+                    detection.getLocationData().getRelativeKeypoints(3).getY()
+            };
+            // de-normalized against screen size & transform translate
+            float[] left_eye = {(left_eye_norm[0]*previewWidth), (left_eye_norm[1]*previewHeight)};
+            float[] right_eye = {(right_eye_norm[0]*previewWidth), (right_eye_norm[1]*previewHeight)};
+            float[] left_ear = {(left_ear_norm[0]*previewWidth), (left_ear_norm[1]*previewHeight)};
+            float[] right_ear = {(right_ear_norm[0]*previewWidth), (right_ear_norm[1]*previewHeight)};
+            float[] mouth = {(mouth_norm[0]*previewWidth), (mouth_norm[1]*previewHeight)};
+            final Bitmap bitmapCopy = Bitmap.createBitmap(
+                    (int)previewWidth,
+                    (int)previewHeight,
+                    Bitmap.Config.ARGB_8888);
+            final HandlerThread handlerThread = new HandlerThread("PixelCopier");
+            handlerThread.start();
+            PixelCopy.request(mPreviewDisplayView, bitmapCopy, new PixelCopy.OnPixelCopyFinishedListener() {
+                @Override
+                public void onPixelCopyFinished(int copyResult) {
+                    try {
+                        Log.d(TAG,"onPixelCopyFinished");
+                        mOriginalBitmap = bitmapCopy;
+                        long startTimeForReference = SystemClock.uptimeMillis();
 
-                            // since tensorflow input image is scaled down, so we need to scale it up
-                            // to get proper face position
-                            Matrix matrixScale = new Matrix();
-                            matrixScale.setScale(previewWidth/mTensorImageSize2, 1,
-                                    previewWidth/2, previewHeight/2);
-                            // re-position the keypoints
-                            matrixScale.mapPoints(left_eye);
-                            matrixScale.mapPoints(right_eye);
-                            matrixScale.mapPoints(left_ear);
-                            matrixScale.mapPoints(right_ear);
-                            matrixScale.mapPoints(mouth);
-                            // since face need to be aligned well before send for inference,
-                            // so we need to rotate image based on position of both eyes
-                            // get center point of rotation as the center between eyes
-                            double rotation = atan2((right_eye[1] - left_eye[1]), (right_eye[0] - left_eye[0]));
-                            double degrees = -(toDegrees(rotation));
-                            Matrix matrixRotation = new Matrix();
-                            matrixRotation.setRotate((float) degrees, previewWidth/2, previewHeight/2);
-                            Bitmap rotateBitmap = Bitmap.createBitmap(bitmapCopy, 0, 0,
-                                    (int)previewWidth, (int)previewHeight, matrixRotation, true);
-                            // width after rotating
-                            int w_rotate = rotateBitmap.getWidth();
-                            int h_rotate = rotateBitmap.getHeight();
-                            // ====>
-                            // so after rotating the bitmap, we need to map the right eye
-                            // the plane cartesian is now changed, become bigger
-                            // first, lets try rotating right eye coordinate around center of original bitmap
-                            matrixRotation.mapPoints(right_eye);
-                            matrixRotation.mapPoints(left_eye);
-                            matrixRotation.mapPoints(right_ear);
-                            matrixRotation.mapPoints(left_ear);
-                            matrixRotation.mapPoints(mouth);
-                            // ====>
-                            // then translate the point of right eye
-                            Matrix matrix = new Matrix();
-                            float dx = ((float) w_rotate - previewWidth) / 2;
-                            float dy = ((float) h_rotate - previewHeight) / 2;
-                            matrix.setTranslate(dx, dy);
-                            matrix.mapPoints(right_eye);
-                            matrix.mapPoints(left_eye);
-                            matrix.mapPoints(right_ear);
-                            matrix.mapPoints(left_ear);
-                            matrix.mapPoints(mouth);
-                            // ====>
-                            // we need to create our own BB after all keypoints are translated to rotated Bitmap
-                            // the BB left-right line is relative to left-right eye
-                            // get distance between eyes, becasue the eyes now already aligned horizontally
-                            // so we dont need to use sqrt to find the distance
+                        // since tensorflow input image is scaled down, so we need to scale it up
+                        // to get proper face position
+                        Matrix matrixScale = new Matrix();
+                        matrixScale.setScale(previewWidth/mTensorImageSize2, 1,
+                                previewWidth/2, previewHeight/2);
+                        // re-position the keypoints
+                        matrixScale.mapPoints(left_eye);
+                        matrixScale.mapPoints(right_eye);
+                        matrixScale.mapPoints(left_ear);
+                        matrixScale.mapPoints(right_ear);
+                        matrixScale.mapPoints(mouth);
+                        // since face need to be aligned well before send for inference,
+                        // so we need to rotate image based on position of both eyes
+                        // get center point of rotation as the center between eyes
+                        double rotation = atan2((right_eye[1] - left_eye[1]), (right_eye[0] - left_eye[0]));
+                        double degrees = -(toDegrees(rotation));
+                        Matrix matrixRotation = new Matrix();
+                        matrixRotation.setRotate((float) degrees, previewWidth/2, previewHeight/2);
+                        Bitmap rotateBitmap = Bitmap.createBitmap(bitmapCopy, 0, 0,
+                                (int)previewWidth, (int)previewHeight, matrixRotation, true);
+                        // width after rotating
+                        int w_rotate = rotateBitmap.getWidth();
+                        int h_rotate = rotateBitmap.getHeight();
+                        // ====>
+                        // so after rotating the bitmap, we need to map the right eye
+                        // the plane cartesian is now changed, become bigger
+                        // first, lets try rotating right eye coordinate around center of original bitmap
+                        matrixRotation.mapPoints(right_eye);
+                        matrixRotation.mapPoints(left_eye);
+                        matrixRotation.mapPoints(right_ear);
+                        matrixRotation.mapPoints(left_ear);
+                        matrixRotation.mapPoints(mouth);
+                        // ====>
+                        // then translate the point of right eye
+                        Matrix matrix = new Matrix();
+                        float dx = ((float) w_rotate - previewWidth) / 2;
+                        float dy = ((float) h_rotate - previewHeight) / 2;
+                        matrix.setTranslate(dx, dy);
+                        matrix.mapPoints(right_eye);
+                        matrix.mapPoints(left_eye);
+                        matrix.mapPoints(right_ear);
+                        matrix.mapPoints(left_ear);
+                        matrix.mapPoints(mouth);
+                        // ====>
+                        // we need to create our own BB after all keypoints are translated to rotated Bitmap
+                        // the BB left-right line is relative to left-right eye
+                        // get distance between eyes, becasue the eyes now already aligned horizontally
+                        // so we dont need to use sqrt to find the distance
 
-                            // define the top-left and bottom of our custom bounding box
-                            float deltax = MainActivity.DELTA_X_FACE * abs(right_eye[0] - left_eye[0]);
-                            float deltay = MainActivity.DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
-                            float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
-                            float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
-                            float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
-                            // re-calculate the size
-                            float crop_w = bb_right_top_1[0] - bb_left_top_1[0];
-                            float crop_h = bb_left_bottom_1[1] - bb_left_top_1[1];
+                        // define the top-left and bottom of our custom bounding box
+                        float deltax = MainActivity.DELTA_X_FACE * abs(right_eye[0] - left_eye[0]);
+                        float deltay = MainActivity.DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
+                        float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
+                        float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
+                        float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
+                        // re-calculate the size
+                        float crop_w = bb_right_top_1[0] - bb_left_top_1[0];
+                        float crop_h = bb_left_bottom_1[1] - bb_left_top_1[1];
 //                            // scale to 160 x 200 pix so
 //                            Matrix matrixScale1 = new Matrix();
 //                            matrixScale1.setScale(160 / crop_w, 160 / crop_h, crop_w / 2, crop_h / 2);
-                            mCroppedBitmap = Bitmap.createBitmap(rotateBitmap,
-                                    (int) bb_left_top_1[0],
-                                    (int) bb_left_top_1[1],
-                                    (int) crop_w,
-                                    (int) crop_h
-                            );
-                            Log.d(TAG, "Image size of cropped bitmap = " +
-                                    mCroppedBitmap.getWidth() + "x" + mCroppedBitmap.getHeight());
+                        mCroppedBitmap = Bitmap.createBitmap(rotateBitmap,
+                                (int) bb_left_top_1[0],
+                                (int) bb_left_top_1[1],
+                                (int) crop_w,
+                                (int) crop_h
+                        );
+                        Log.d(TAG, "Image size of cropped bitmap = " +
+                                mCroppedBitmap.getWidth() + "x" + mCroppedBitmap.getHeight());
 //                            setBitmap(mCroppedBitmap);
-                            long endTimeForReference = SystemClock.uptimeMillis();
-                            String cost = "Inference timecost: " + (endTimeForReference - startTimeForReference);
-                            Log.d(TAG, cost);
-                        } catch (Exception ex) {
-                            // face is not in the center of screen,
-                            // half cropped, this will lead to exception,
-                            // because coordinate inconsistence
-                        } finally {
-                            mIsProcessing = false;
-                        }
+                        long endTimeForReference = SystemClock.uptimeMillis();
+                        String cost = "Inference timecost: " + (endTimeForReference - startTimeForReference);
+                        Log.d(TAG, cost);
+                    } catch (Exception ex) {
+                        // face is not in the center of screen,
+                        // half cropped, this will lead to exception,
+                        // because coordinate inconsistence
+                    } finally {
+                        mIsProcessing = false;
                     }
-                }, new Handler(handlerThread.getLooper()));
-            }
+                }
+            }, new Handler(handlerThread.getLooper()));
         });
     }
 

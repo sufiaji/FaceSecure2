@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="true"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@android:color/transparent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/layout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="12dp"
+        android:background="@drawable/layout_bottom_2"
+        android:orientation="vertical">
+
+        <com.jackandphantom.circularimageview.CircleImage
+            android:id="@+id/iv_thumb_update"
+            android:layout_width="118dp"
+            android:layout_height="118dp"
+            android:src="@drawable/aji_thumb1"
+            android:scaleType="centerInside"
+            android:layout_centerHorizontal="true"/>
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_below="@id/iv_thumb_update"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:text="Halo <name>, update foto Anda?" />
+
+        <LinearLayout
+            android:id="@+id/ly_button"
+            android:layout_below="@id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="24dp"
+            android:layout_centerHorizontal="true">
+            <Button
+                android:id="@+id/btn_update_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="8dp"
+                android:text="Batal"
+                android:background="@drawable/layout_button_round"/>
+            <Button
+                android:id="@+id/btn_update_update"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="Update"
+                android:textColor="@color/colorRed"
+                android:background="@drawable/layout_button_round"/>
+        </LinearLayout>
+
+
+        <LinearLayout
+            android:layout_below="@id/ly_button"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginBottom="6dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="5"
+            android:orientation="horizontal">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_weight="4"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/tv_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Senin, 28 Januari 2020"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+                <TextView
+                    android:id="@+id/tv_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="08:35 WIB"
+                    android:textColor="#000000"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+            <RelativeLayout
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:orientation="horizontal"
+                android:layout_height="match_parent">
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_offline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:drawablePadding="4dp"
+                    android:layout_alignParentBottom="true"
+                    android:text="Offline"
+                    android:textSize="12sp"
+                    android:textColor="#000"
+                    app:cit_drawableLeft="@drawable/ic_circle_red"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+                <com.github.aakira.compoundicontextview.CompoundIconTextView
+                    android:id="@+id/tv_online"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentBottom="true"
+                    android:drawablePadding="4dp"
+                    android:visibility="invisible"
+                    android:text="Online"
+                    android:textColor="#000"
+                    android:textSize="12sp"
+                    app:cit_drawableLeft="@drawable/ic_circle_green"
+                    app:cit_iconHeight="12dp"
+                    app:cit_iconWidth="12dp" />
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</RelativeLayout>

@@ -1,17 +1,35 @@
 package com.merkaba.facesecure2.model;
 
+import android.graphics.Bitmap;
+
+import com.merkaba.facesecure2.utils.Utils;
+
 public class User {
 
     private String userId;
     private String name;
     private long createdAt;
-    private String isLocal = " ";
+    private String isLocal = "";
+    private String division = "";
+    private byte[] blobCrop;
+    private byte[] blobFull;
+    private Bitmap crop;
+    private Bitmap full;
 
-    public User(String userId, String name, long createdAt, String isLocal) {
+    public User(String userId, String name, String division, long createdAt, String isLocal, Bitmap cropped, Bitmap full) {
         this.userId = userId;
         this.name = name;
         this.createdAt = createdAt;
         this.isLocal = isLocal;
+        this.division = division;
+
+        this.crop = cropped;
+        blobCrop = Utils.getBitmapAsByteArray(cropped);
+
+        this.full = full;
+        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(full, Utils.USER_IMAGE_MAX_WIDTH);
+        blobFull = Utils.getBitmapAsByteArray(bitmapRescale);
+
     }
 
     public String getIsLocal() {
@@ -44,6 +62,14 @@ public class User {
 
     public void setCreatedAt(int createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public byte[] getBlobCrop() {
+        return blobCrop;
+    }
+
+    public byte[] getBlobFull() {
+        return blobFull;
     }
 
 }

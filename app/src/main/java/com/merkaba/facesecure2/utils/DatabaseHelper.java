@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -35,7 +36,7 @@ import java.util.regex.Pattern;
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     // Database Version
-    private static final int DATABASE_VERSION = 5;
+    private static final int DATABASE_VERSION = 6;
 
     // Database Name
     private static final String DATABASE_NAME = "facesecure";
@@ -53,7 +54,9 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String COL_STATUS = "status";
     private static final String COL_LOCATION = "location";
     private static final String COL_IMAGE = "image";
+    private static final String COL_THUMB = "thumb";
     private static final String COL_UNSENT = "unsent";
+    private static final String COL_TEMPERATURE = "temperature";
     private static final String STRING_TRUE = "X";
     private static final String STRING_FALSE = " ";
 
@@ -62,6 +65,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COL_USER_ID + " TEXT UNIQUE, "
             + COL_CREATED_AT + " INTEGER, "
             + COL_CREATED_LOCAL + " TEXT, "
+            + COL_THUMB + " BLOB, "
+            + COL_IMAGE + " BLOB, "
             + COL_NAME + " TEXT )";
 
     private String CREATE_ATTENDANCE_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS " + TABLE_ATTENDANCE + " ( "
@@ -71,6 +76,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             + COL_STATUS + " TEXT, "
             + COL_LOCATION + " TEXT, "
             + COL_IMAGE + " BLOB, "
+            + COL_TEMPERATURE + " REAL, "
             + COL_UNSENT + " TEXT )";
 
     private String CREATE_ENCODING_TABLE_STATEMENT = "CREATE TABLE IF NOT EXISTS " + TABLE_ENCODING + " ( "
@@ -126,6 +132,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COL_NAME, user.getName());
         values.put(COL_CREATED_AT, user.getCreatedAt());
         values.put(COL_CREATED_LOCAL, user.getIsLocal());
+        values.put(COL_THUMB, user.getBlobCrop());
+        values.put(COL_IMAGE, user.getBlobFull());
         SQLiteDatabase db = this.getWritableDatabase();
         long id = db.insertWithOnConflict(TABLE_USER, null, values, SQLiteDatabase.CONFLICT_IGNORE);
         db.close();
@@ -286,8 +294,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 int createdAt = cursor.getInt(cursor.getColumnIndex(COL_CREATED_AT));
                 String isLocal = cursor.getString(cursor.getColumnIndex(COL_CREATED_LOCAL));
                 String name = cursor.getString(cursor.getColumnIndex(COL_NAME));
-                User user = new User(userId, name, createdAt, isLocal);
-//                Attendance attendance = new Attendance(id, userId, createdAt, status, location, unSent);
+                User user = new User(userId, name, "", createdAt, isLocal, null, null);
                 users.add(user);
             } while(cursor.moveToNext());
         }
@@ -295,7 +302,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     }
 
     public int updateSentAttendances(List<Attendance> attendances) {
-//        db.update(TABLE_JOB_DETAIL, data, COL_ID + " IN (?,?,?)", new String[]{"1","2","3"});
         try {
             ArrayList<String> listId = new ArrayList<>();
             String idQst = " IN (" ;
@@ -351,6 +357,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             db.delete(TABLE_ENCODING, COL_USER_ID + " = '" + user.getUserId() + "'", null);
             db.delete(TABLE_ATTENDANCE, COL_USER_ID + " = '" + user.getUserId() + "'", null);
         }
+        db.close();
+    }
+
+    public void deleteUser(long id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete(TABLE_USER, COL_USER_ID + " = '" + id + "'", null);
         db.close();
     }
 

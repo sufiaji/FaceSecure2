@@ -11,7 +11,8 @@ import java.util.List;
 
 public final class Utils {
 
-    public static final int IMG_MAX_WIDTH = 64;
+    public static final int ATTENDANCE_THUMB_MAX_WIDTH = 64;
+    public static final int USER_IMAGE_MAX_WIDTH = 400;
 
     private Utils() {}
 
@@ -32,6 +33,11 @@ public final class Utils {
             return Base64.encodeToString(byteArray, Base64.DEFAULT);
         else
             return "";
+    }
+
+    public static Bitmap string64ToBitmap(String s64) {
+        byte[] b = Base64.decode(s64, Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(b, 0, b.length);
     }
 
     public static Bitmap scaleImageKeepAspectRatio(Bitmap originalBitmap, int newWidth)

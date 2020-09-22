@@ -17,7 +17,7 @@ public class Attendance {
     private String unSent;
     private int id;
     private byte[] blobImage;
-    private String base64Image;
+//    private String base64Image;
 
     public Attendance(int id, String userId, long createdDateTime, String status, String location, String unSent) {
         // is being used to download last attendance data from server, so need to download image
@@ -43,9 +43,9 @@ public class Attendance {
         this.createdOn = dateTime[1];
         this.status = status;
         this.location = location;
-        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.IMG_MAX_WIDTH);
+        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
         this.blobImage = Utils.getBitmapAsByteArray(bitmapRescale);
-        this.base64Image = Utils.getByteArrayAsString64(this.blobImage);
+//        this.base64Image = Utils.getByteArrayAsString64(this.blobImage);
         this.unSent = unSent;
     }
 
@@ -66,9 +66,9 @@ public class Attendance {
 //        this.blobImage = bitmapBlob;
 //        this.base64Image = Utils.getByteArrayAsString64(this.blobImage);
         Bitmap bitmap = Utils.getBitmapFromByteArray(bitmapBlob);
-        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.IMG_MAX_WIDTH);
+        Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
         byte[] bitmapByte = Utils.getBitmapAsByteArray(bitmapRescale);
-        this.base64Image = Utils.getByteArrayAsString64(bitmapByte);
+//        this.base64Image = Utils.getByteArrayAsString64(bitmapByte);
         this.unSent = unSent;
     }
 

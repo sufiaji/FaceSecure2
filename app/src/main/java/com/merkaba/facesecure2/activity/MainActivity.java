@@ -14,7 +14,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
@@ -158,6 +157,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public static final String PREF_SMTP_EMAIL_SEND_TIME = "email_send_time";
     public static final String PREF_SEND_MAIL = "send_email";
     public static final String PREF_PIN_MENU = "pin_menu";
+    public static final String PREF_ENABLE_OFFLINE = "enable_offline";
 
     public static final String URL_GET_PING = "/api/v1/facesecure/ping/";
     public static final String URL_GET_PREDICTION = "/api/v1/facesecure/recognize/";
@@ -174,6 +174,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public static final String STRING_CLOCK_IN = "P10";
     public static final String STRING_CLOCK_OUT = "P20";
     public static final String STRING_NEW_PERSON = "new_person";
+    public static final String STRING_UPDATE_PERSON = "update_person";
     public static final String STRING_CLOCK_CANCEL = "cancel";
     public static final String FACE_STATUS = "face_status";
     public static final String FACE_REAL = "face_real";
@@ -201,7 +202,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     public static final String NA = "na";
     public static final String DEFAULT_IP = "0.0.0.0:0000";
     public static final int ENCODING_LENGTH = 128;
-    public static final float DELTA_X_FACE = 0.4f;
+    public static final float DELTA_X_FACE = 0.45f;
     public static final float DELTA_Y_FACE = 0.6f;
     public static final String CARRIAGE_RETURN = System.getProperty("line.separator");
 
@@ -284,7 +285,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private SpinKitView mIndicator;
     private List<DetectionProto.Detection> mDetectionVector;
     private Bitmap mCroppedBitmap = null;
-    private int mTensorImageSize = 640;
+    public static int mTensorImageSize = 640;
     public static String oIpAndPort;
     private int mAutoTimeoutMinutes = 59; // 60 minutes
     private int mAutoTimeoutHours = 0; // 0 hour
@@ -322,7 +323,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mSmtpEmailTime = "23:45";
     private boolean mSendMail = false;
 
-    private boolean mIsCloud = true;
+    public static boolean mEnableOffline = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -382,6 +383,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         mSmtpReceiver = Prefs.getString(PREF_SMTP_RECEIVER_USER, mSmtpReceiver);
         mSmtpEmailTime = Prefs.getString(PREF_SMTP_EMAIL_SEND_TIME, mSmtpEmailTime);
         mSendMail = Prefs.getBoolean(PREF_SEND_MAIL, mSendMail);
+        mEnableOffline = Prefs.getBoolean(PREF_ENABLE_OFFLINE, true);
         //
         assignFabListener();
         //
@@ -920,7 +922,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             mStandbyTimerIsRun = true;
         } else {
             if(!mStandbyTimerIsRun) {
-                showDebug("STANDBY Timer started (" + mStandbyTimeout + " seconds overflow)");
+//                showDebug("STANDBY Timer started (" + mStandbyTimeout + " seconds overflow)");
                 mStandbyTimer = mSchedulerExecutor.schedule(mStandbyRunnableTimer, mStandbyTimeout, TimeUnit.SECONDS);
                 Log.d(TAG, "START Standby Timer");
                 mStandbyTimerIsRun = true;
@@ -1099,7 +1101,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         if(mStandbyTimer!=null && mStandbyTimerIsRun) {
             mStandbyTimer.cancel(true);
             mStandbyTimerIsRun = false;
-            showDebug("STANDBY Timer stopped");
+//            showDebug("STANDBY Timer stopped");
             Log.d(TAG, "STOP Standby Timer");
         }
     }
@@ -1161,7 +1163,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         if(mTextToSpeech!=null) {
-            mTextToSpeech.setSpeechRate(1.8f);
+            mTextToSpeech.setSpeechRate(1.5f);
         }
     }
 
@@ -1228,15 +1230,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             startProgram();
     }
 
-    private void testdisplay() {
-        Bitmap face = BitmapFactory.decodeResource(getResources(), R.drawable.aji_thumb1);
-        displayBottomAttendanceOk(face, "Pradhono Aji", "123456789", STRING_CLOCK_OUT, true );
-//        displayBottomMessageUnknown();
-//        Bitmap b = BitmapFactory.decodeResource(getResources(), R.drawable.aji_thumb1);
-//        displayBottomAttendanceConfirm("12345678", "Pradhono Rakhmono", face, false);
-    }
-
-
     private void callPasswordScreen() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
         LayoutInflater inflater = getLayoutInflater();
@@ -1244,9 +1237,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         dialog.setView(dialogView);
         dialog.setCancelable(false);
         final EditText edtPassword = dialogView.findViewById(R.id.edt_password);
-        edtPassword.setHint("Masukkan PIN");
-//        TextInputLayout textInputLayout = findViewById(R.id.textInputLayout_password);
-//        textInputLayout.setHintTextAppearance();
+        edtPassword.setHint(getString(R.string.input_pin));
 
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
@@ -1256,13 +1247,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     mIsMenuLocked = false;
                     mFabMenu.open(true);
                 } else {
-                    displayToastError(null, "PIN salah");
+                    displayToastError(null, getString(R.string.wrong_pin));
                     mFabMenu.close(false);
                 }
             }
         });
 
-        dialog.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
+        dialog.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 mFabMenu.close(false);
@@ -1355,22 +1346,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
         //
-        FloatingActionButton fabMail = findViewById(R.id.fab_mail);
-        fabMail.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mFabMenu.close(false);
-                onEmailClick();
-            }
-        });
-        //
-//        FloatingActionButton fabPassword = findViewById(R.id.fab_password);
-//        fabPassword.setOnClickListener(new View.OnClickListener() {
+//        FloatingActionButton fabMail = findViewById(R.id.fab_mail);
+//        fabMail.setOnClickListener(new View.OnClickListener() {
 //            @Override
-//            public void onClick(View view) {
-//                onLockMenu();
+//            public void onClick(View v) {
+//                mFabMenu.close(false);
+//                onEmailClick();
 //            }
 //        });
+
     }
 
     private void onLockMenu() {
@@ -1383,11 +1367,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 .setNegativeButtonColorRes(R.color.colorRed)
                 .setPositiveButtonColorRes(R.color.colorPrimaryDark)
                 .setIcon(R.drawable.ic_sync)
-                // TODO: language
-//                .setTitle("Sync Confirmation")
-//                .setMessage("Sync will upload attendance data to Server, and will download user data from Server. It may takes sometimes. Continue?")
-                .setTitle("Konfirmasi sinkronisasi")
-                .setMessage("Sinkronisasi akan mengunggah data Absensi dan mengunduh data User. Hal ini akan membutuhkan beberapa waktu...")
+                .setTitle(getString(R.string.title_confirm_sync))
+                .setMessage(getString(R.string.s_confirm_sync))
                 .setCancelable(false)
                 .setPositiveButton("OK", new View.OnClickListener() {
                     @Override
@@ -1395,7 +1376,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         doPingAndSync();
                     }
                 })
-                .setNegativeButton("Batal", new View.OnClickListener() {
+                .setNegativeButton(getString(R.string.cancel), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                     }
@@ -1606,41 +1587,6 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         });
     }
 
-    private void promptPasswordDebug() {
-        AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
-        LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_password, null);
-        dialog.setView(dialogView);
-        dialog.setCancelable(false);
-        final EditText edtPassword = dialogView.findViewById(R.id.edt_password);
-        edtPassword.setHint("Masukkan PIN debug");
-
-        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String password = edtPassword.getText().toString().trim();
-                if(password.equals(getDebugPassword()))
-                    onDebugClick();
-                else
-                    displayToastError(null, "PIN salah");
-            }
-        });
-
-        dialog.setNegativeButton("Batal", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        dialog.show();
-        mFabMenu.close(false);
-    }
-
-    private String getDebugPassword() {
-        return ("2410");
-    }
-
-
     private String getMenuPassword() {
         String pin = Prefs.getString(PREF_PIN_MENU, "1234");
         return pin;
@@ -1660,8 +1606,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-//                displayToastError(null, "Cannot connect to server");
-                displayToastError(null, "Tidak terkoneksi ke server.");
+                displayToastError(null, getString(R.string.s_error_offline));
             }
         });
     }
@@ -1693,8 +1638,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                mProgressSpinKit.setVisibility(View.GONE);
                 mIsOnline = false;
-                processFrame(detection, false);
+                if(mEnableOffline)
+                    processFrame(detection, false);
+                else
+                    displayBottomMessageError(null, getString(R.string.s_error_offline));
             }
         });
     }
@@ -1703,8 +1652,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         Log.d(TAG, "Entering Predict offline");
         showDebug("Entering Predict offline");
         final long start = SystemClock.uptimeMillis();
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(croppedBitmap);
-        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+        byte[] byteArrayPhoto = Utils.bitmapToByteArray(croppedBitmap);
+        String encodedFile = Utils.byteArrayToString64(byteArrayPhoto);
         if (!Python.isStarted()) {
             displayToastError(null, "Internal error, cannot start compiler engine");
             delayedFinishProcessFlag();
@@ -1720,7 +1669,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             showDebug("No encoding record in database. Quit.");
             hideProgressSpinKit();
             hideTextProgress();
-            displayBottomMessageError(null, "Tidak ada data di database.");
+            displayBottomMessageError(null, getString(R.string.s_no_record_db));
             hideScanAnim();
             return;
         }
@@ -1736,7 +1685,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             String msg = ">>> " + userMatch + ":" + name + ":" + dist + ", ";
 //            showDebug(msg);
         }
-        long stop = SystemClock.uptimeMillis();
+//        long stop = SystemClock.uptimeMillis();
         if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
             // debug is on and no need post attendance then quit
             showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
@@ -1745,9 +1694,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             hideScanAnim();
             if(userMatch.isEmpty()) {
                 displayBottomMessageUnknown();
-                speakFeedback("Tidak dikenal.");
+                speakFeedback(getString(R.string.s_unknown_face));
             } else {
-                displayBottomMessageSuccess("Halo " + name + " (NIK: " + userMatch + ")");
+                displayBottomMessageSuccess(getString(R.string.s_hello) + " " + name + CARRIAGE_RETURN + getString(R.string.s_your_nik) + " " + userMatch);
             }
             return;
         }
@@ -1767,7 +1716,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
              */
             mUsernamePostAttendance = "";
             mUserIdPostAttendance = "";
-            speakFeedback("Tidak dikenal.");
+            speakFeedback(getString(R.string.s_unknown_face));
             displayBottomMessageUnknown();
             showDebug("No face match");
             hideProgressSpinKit();
@@ -1777,19 +1726,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         }
     }
 
-    private void postAutoModeOnline(final Bitmap croppedBitmap) {
+    private void autoAttendancePost(final Bitmap croppedBitmap) {
 //        @param thumb: cropped & aligned face image, in base64 String
 //        @param threshold: threshold distance
 //        @param minute_threshold: minimum time allowed for auto-attendance (in minutes)
 //        @param created_at: date of attendance, string
 //        @param created_on: time of attendance, string
 //        @param location: 2 digit string location
+        showDebug("entering postAutoModeOnline");
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
         final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
         Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(croppedBitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
-        byte[] byteArray = Utils.getBitmapAsByteArray(bitmapRescale);
-        String encodedThumb = Utils.getByteArrayAsString64(byteArray);
+        byte[] byteArray = Utils.bitmapToByteArray(bitmapRescale);
+        String encodedThumb = Utils.byteArrayToString64(byteArray);
 
         RequestParams rparams = new RequestParams();
         rparams.put("thumb", encodedThumb);
@@ -1814,19 +1764,20 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                 String response = new String(responseBody);
 
-
                 if(statusCode==200) {
                     try {
                         JSONObject jo = new JSONObject(response);
                         String resultUserid = jo.getString("user_id");
                         String resultName = jo.getString("name");
                         String resultStatus = jo.getString("status");
+                        String image = jo.getString("image");
+                        Bitmap bImage = Utils.string64ToBitmap(image);
                         showBlurBackground();
                         if (resultStatus.equalsIgnoreCase(STRING_CLOCK_IN)) {
-                            displayBottomAttendanceOkUIThread(mBitmapBig, resultName, resultUserid, STRING_CLOCK_IN, true);
+                            displayBottomAttendanceOkUIThread(bImage, resultName, resultUserid, STRING_CLOCK_IN, true);
                             speakWelcome(resultName);
                         } else {
-                            displayBottomAttendanceOkUIThread(mBitmapBig, resultName, resultUserid, STRING_CLOCK_OUT, true);
+                            displayBottomAttendanceOkUIThread(bImage, resultName, resultUserid, STRING_CLOCK_OUT, true);
                             speakGoodbye(resultName);
                         }
 
@@ -1840,53 +1791,126 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         e.printStackTrace();
                     }
                 } else if (statusCode==201) {
-                    // still within timerange, not allowed to post
-//                    return {'user_id':userId,
-//                            'name':user_data['name'],
-//                            'last_created_at':return_data['created_at'],
-//                            'last_created_on':return_data['created_on'],
-//                            'delta_time':delta_time}, 201
-                    String dateNow = new DateUtils("-").getCurrentDate();
-//                    String createdOnNow = new DateUtils("-").getCurrentTime();
+
+                    // database is empty encoding
+                    hideScanAnim();
+                    hideProgressSpinKit();
+                    hideTextProgress();
+                    displayBottomMessageWarning(getString(R.string.s_no_record_db));
+
+                }  else if (statusCode == 202) {
+
+                    // no match (empty return data)
+                    hideProgressSpinKit();
+                    hideTextProgress();
+                    hideScanAnim();
+                    speakFeedback(getString(R.string.s_unknown_face));
+                    showDebug("No face match");
+                    displayBottomMessageUnknown();
+                } else if (statusCode == 203) {
+                    // not allowed to post because still within range (auto mode)
                     try {
                         JSONObject jo = new JSONObject(response);
-                        String userId = jo.getString("user_id");
+                        String uid = jo.getString("user_id");
                         String name = jo.getString("name");
-                        String timeDelta = jo.getString("delta_time");
-                        String[] timeSplit = timeDelta.split(":");
-                        int h = Integer.parseInt(timeSplit[0]);
-                        int m = Integer.parseInt(timeSplit[1]);
-                        int s = Integer.parseInt(timeSplit[2]);
+                        String status = jo.getString("last_status");
+                        String deltaTime = jo.getString("delta_time");
+                        String[] s = deltaTime.split(":");
+                        String hour = s[0];
+                        int i_hour = Integer.parseInt(hour);
+                        String minute = s[1];
+                        int i_minute = Integer.parseInt(minute);
+                        String second = s[2];
+                        int i_second = Integer.parseInt(second);
+                        String msg = "";
+                        if(hour.equalsIgnoreCase("0")) {
+                            // zero hours
+                            if(i_minute==0) {
+                                // zero hour, zero minute
+                                 msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                        + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                        + " " + i_second + " " + getString(R.string.s_second);
+                            } else {
+                                if(i_second==0) {
+                                    // zero hour, nonzero minute, zero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_minute + " " + getString(R.string.s_minute);
+                                } else {
+                                    // zero hour, nonzero minute, nonzero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_minute + " " + getString(R.string.s_minute)
+                                            + " " + i_second + " " + getString(R.string.s_second);
+                                }
+                            }
 
-                        String msg = "NIK: " + userId + CARRIAGE_RETURN + "Nama: " + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah";
-                        if(h!=0) {
-                            msg = msg + h + " jam";
+                        } else {
+                            // nonzero hour
+                            if(i_minute==0) {
+                                if(second.equalsIgnoreCase("00")) {
+                                    // nonzero hour, zero minute, zero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_hour + " " + getString(R.string.s_hour);
+                                } else {
+                                    // nonzero hour, zero minute, nonzero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_hour + " " + getString(R.string.s_hour)
+                                            + " " + i_second + " " + getString(R.string.s_second);
+                                }
+                            } else {
+                                if(i_second==0) {
+                                    // nonzero hour, nonzero minute, zero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_hour + " " + getString(R.string.s_hour)
+                                            + " " + i_minute + " " + getString(R.string.s_minute);
+                                } else {
+                                    // nonzero hour, nonzero minute, nonzero second
+                                    msg = getString(R.string.s_nik) + " " + uid + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name
+                                            + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + i_hour + " " + getString(R.string.s_hour)
+                                            + " " + i_minute + " " + getString(R.string.s_minute)
+                                            + " " + i_second + " " + getString(R.string.s_second);
+                                }
+                            }
+                            
                         }
-                        if(m!=0) {
-                            msg = msg + ", " + m + " menit";
-                        }
-                        if(s!=0) {
-                            msg = msg + ", " + s + " detik";
-                        }
-                        msg = msg + ".";
 
                         displayBottomMessageWarning(msg);
-                        hideProgressSpinKit();
-                        hideScanAnim();
-                        speakNoProcess();
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+                    hideProgressSpinKit();
+                    hideScanAnim();
+                    speakNoProcess();
+                } else if (statusCode == 204) {
+                    // not allowed to clock in since outside shift tolerance (too early or too late already)
 
+                    hideProgressSpinKit();
+                    hideTextProgress();
+                    hideScanAnim();
+                    speakFeedback(getString(R.string.s_outside_tolerance));
+                    showDebug("Outside shift tolerance");
+                    displayBottomMessageError(null, getString(R.string.s_outside_tolerance));
                 }
 
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-
-                displayToastError(null, "Koneksi dengan server bermasalah, berganti ke mode offline, mohon tunggu...");
-                predictOffline(croppedBitmap);
+                if(mEnableOffline) {
+                    displayToastError(null, getString(R.string.s_error_server_change_offline));
+                    predictOffline(croppedBitmap);
+                } else {
+                    hideProgressSpinKit();
+                    hideScanAnim();
+                    hideTextProgress();
+                    displayBottomMessageError(null, getString(R.string.s_error_att));
+//                    displayToastError(null, getString(R.string.s_error_att));
+                }
 
             }
         });
@@ -1898,8 +1922,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         Log.d(TAG, "Entering Predict online");
         showDebug("Entering Predict online");
         final long start = SystemClock.uptimeMillis();
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(croppedBitmap);
-        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+        byte[] byteArrayPhoto = Utils.bitmapToByteArray(croppedBitmap);
+        String encodedFile = Utils.byteArrayToString64(byteArrayPhoto);
         String url = URL_HTTP + oIpAndPort + URL_GET_PREDICTION;
 
         RequestParams rparams = new RequestParams();
@@ -1915,17 +1939,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-
-                String str = new String(responseBody);
+                String msg = ">>> ";
                 try {
                     if (statusCode == 200) {
-                        // we have matched person
 
-                        String msg = ">>> ";
+                        String str = new String(responseBody);
+                        // we have matched person
                         String name = "";
                         String user_id = "";
-                        String firstName = "";
-                        String firstUserid = "";
+
                         JSONObject jsonResponse = new JSONObject(str);
                         int numel = 3;
                         for (int i = 0; i < numel; i++) {
@@ -1935,135 +1957,148 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             String dist = jsonObject.getString("distance");
                             msg = msg + user_id + ":" + name + ":" + dist + ", ";
                             if (i == 0) {
-                                firstName = name;
-                                firstUserid = user_id;
+                                mUsernamePostAttendance = name;
+                                mUserIdPostAttendance = user_id;
+                                if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
+                                    hideScanAnim();
+                                    hideProgressSpinKit();
+                                    hideTextProgress();
+                                    displayBottomMessageSuccess(getString(R.string.s_hello) + " " + mUsernamePostAttendance + CARRIAGE_RETURN + getString(R.string.s_nik) + " " + mUserIdPostAttendance);
+                                    speakFeedback(getString(R.string.s_hello) + " " + mUsernamePostAttendance);
+                                    return;
+                                }
+                                manualMode(mUserIdPostAttendance, mUsernamePostAttendance, /*croppedBitmap*/ mBitmapBig, true);
                             }
                         }
-                        if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
-                            hideScanAnim();
-                            hideProgressSpinKit();
-                            hideTextProgress();
-                            displayBottomMessageSuccess("Halo " + firstName + " (NIK: " + firstUserid + ")");
-                            speakFeedback("Halo " + firstName);
-                        }
-                        showDebug(msg);
+
 
                     } else if (statusCode == 201) {
                         // database is empty encoding
-
+                        hideScanAnim();
+                        hideProgressSpinKit();
+                        hideTextProgress();
+                        displayBottomMessageWarning(getString(R.string.s_no_record_db));
 
                     } else if (statusCode == 202) {
                         // no match (empty return data)
+                        hideProgressSpinKit();
+                        hideTextProgress();
+                        hideScanAnim();
+                        speakFeedback(getString(R.string.s_unknown_face));
+                        showDebug("No face match");
+                        displayBottomMessageUnknown();
                     }
                 } catch (JSONException e) {
                     e.printStackTrace();
+                    showDebug(e.getMessage());
+                } finally {
+                    showDebug(msg);
                 }
                 //
                 //
                 //
-                if(statusCode==200) {
-                    String msg = ">>> ";
-                    String name = "";
-                    String user_id = "";
-                    String firstName = "";
-                    String firstUserid = "";
-                    boolean emptyEncoding = false;
-                    try {
-//                        String str = new String(responseBody);
-                        if(str.contains("empty encoding"))
-                            emptyEncoding = true;
-                        JSONObject jsonResponse = new JSONObject(str);
-                        int numel = 3;
-                        for(int i=0;i<numel;i++) {
-                            JSONObject jsonObject = jsonResponse.getJSONObject(Integer.toString(i+1));
-                            user_id = jsonObject.getString("user_id");
-                            name = jsonObject.getString("name");
-                            String dist = jsonObject.getString("distance");
-                            msg = msg + user_id + ":" + name + ":" + dist + ", ";
-                            if(i==0) {
-                                firstName = name;
-                                firstUserid = user_id;
-                            }
-                        }
-
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-//                        showDebug("JSON Exception: " + e.toString());
-                        // Exception here is just to catch Json number because we depend on this exception
-                        // so dont set flag processing
-                    } finally {
-                        if(firstUserid.isEmpty()) {
-                            if(emptyEncoding)
-                                showDebug("Database encoding empty in server");
-                            else
-                                showDebug("No Match");
-                            hideScanAnim();
-                        } else {
-                            showDebug(msg);
-                        }
-                        long stop = SystemClock.uptimeMillis();
-                        showDebug("Timecost: " + (stop-start));
-                        if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
-                            // debug is on and no need post attendance then quit
-                            showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
-                            hideScanAnim();
-                            hideProgressSpinKit();
-                            hideTextProgress();
-                            if(firstUserid.isEmpty()) {
-                                if(emptyEncoding) {
-                                    displayToastError(null, "Tidak ada record di database");
-                                } else {
-                                    displayToastError(null, "Tidak dikenal.");
-                                    speakFeedback("Tidak dikenal.");
-                                }
-                                delayedFinishProcessFlag();
-
-                            } else {
-                                displayBottomMessageSuccess("Halo " + firstName + " (NIK: " + firstUserid + ")");
-                                speakFeedback("Halo " + firstName);
-                            }
-                            return;
-                        }
-                        if(!firstUserid.isEmpty()) {
-                            mUsernamePostAttendance = firstName;
-                            mUserIdPostAttendance = firstUserid;
-                            if (mAutoMode) {
-                                autoModeOnline(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig);
-                            } else {
-                                mBitmapBig2 = mBitmapBig;
-                                manualMode(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig, true);
-                            }
-                        } else {
-                            /**
-                            No face match. Quit.
-                             */
-//                            speakFeedback("Tidak dikenal.");
-                            if(emptyEncoding) {
-                                showDebug("No record on DB");
-                                displayToastError(null, "Tidak ada record di database");
-                                delayedFinishProcessFlag();
-                            } else {
-                                displayToastError(null, "Tidak dikenal.");
-                                speakFeedback("Tidak dikenal.");
-                                showDebug("No face match");
-                                displayBottomMessageUnknown();
-                            }
-                            hideProgressSpinKit();
-                            hideTextProgress();
-                            hideScanAnim();
-                            return;
-                        }
-                    }
-                } else {
-                    // error on getting prediction, URL = URL_GET_PREDICTION
-                    // success but not return 200, nothing we have here, repeat the process
-                    showDebug("Prediction success but response not 200, should not be happened");
-                    mIsProcessing = false;
-//                    startAnim = false;
-                    hideProgressSpinKit();
-                    hideTextProgress();
-                    hideScanAnim();
-                }
+//                if(statusCode==200) {
+//                    String msg = ">>> ";
+//                    String name = "";
+//                    String user_id = "";
+//                    String firstName = "";
+//                    String firstUserid = "";
+//                    boolean emptyEncoding = false;
+//                    try {
+////                        String str = new String(responseBody);
+//                        if(str.contains("empty encoding"))
+//                            emptyEncoding = true;
+//                        JSONObject jsonResponse = new JSONObject(str);
+//                        int numel = 3;
+//                        for(int i=0;i<numel;i++) {
+//                            JSONObject jsonObject = jsonResponse.getJSONObject(Integer.toString(i+1));
+//                            user_id = jsonObject.getString("user_id");
+//                            name = jsonObject.getString("name");
+//                            String dist = jsonObject.getString("distance");
+//                            msg = msg + user_id + ":" + name + ":" + dist + ", ";
+//                            if(i==0) {
+//                                firstName = name;
+//                                firstUserid = user_id;
+//                            }
+//                        }
+//
+//                    } catch (JSONException e) {
+//                        e.printStackTrace();
+////                        showDebug("JSON Exception: " + e.toString());
+//                        // Exception here is just to catch Json number because we depend on this exception
+//                        // so dont set flag processing
+//                    } finally {
+//                        if(firstUserid.isEmpty()) {
+//                            if(emptyEncoding)
+//                                showDebug("Database encoding empty in server");
+//                            else
+//                                showDebug("No Match");
+//                            hideScanAnim();
+//                        } else {
+//                            showDebug(msg);
+//                        }
+//                        long stop = SystemClock.uptimeMillis();
+//                        showDebug("Timecost: " + (stop-start));
+//                        if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
+//                            // debug is on and no need post attendance then quit
+//                            showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
+//                            hideScanAnim();
+//                            hideProgressSpinKit();
+//                            hideTextProgress();
+//                            if(firstUserid.isEmpty()) {
+//                                if(emptyEncoding) {
+//                                    displayToastError(null, getString(R.string.s_no_record_db));
+//                                } else {
+//                                    displayToastError(null, getString(R.string.s_unknown_face));
+//                                    speakFeedback(getString(R.string.s_unknown_face));
+//                                }
+//                                delayedFinishProcessFlag();
+//
+//                            } else {
+//                                displayBottomMessageSuccess(getString(R.string.s_hello) + " " + firstName + CARRIAGE_RETURN + getString(R.string.s_nik) + " " + firstUserid);
+//                                speakFeedback(getString(R.string.s_hello) + " " + firstName);
+//                            }
+//                            return;
+//                        }
+//                        if(!firstUserid.isEmpty()) {
+//                            mUsernamePostAttendance = firstName;
+//                            mUserIdPostAttendance = firstUserid;
+//                            if (mAutoMode) {
+//                                autoModeOnline(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig);
+//                            } else {
+//                                mBitmapBig2 = mBitmapBig;
+//                                manualMode(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig, true);
+//                            }
+//                        } else {
+//                            /**
+//                            No face match. Quit.
+//                             */
+//                            if(emptyEncoding) {
+//                                showDebug("No record on DB");
+//                                displayToastError(null, getString(R.string.s_no_record_db));
+//                                delayedFinishProcessFlag();
+//                            } else {
+////                                displayToastError(null, getString(R.string.s_unknown));
+//                                speakFeedback(getString(R.string.s_unknown_face));
+//                                showDebug("No face match");
+//                                displayBottomMessageUnknown();
+//                            }
+//                            hideProgressSpinKit();
+//                            hideTextProgress();
+//                            hideScanAnim();
+//                            return;
+//                        }
+//                    }
+//                } else {
+//                    // error on getting prediction, URL = URL_GET_PREDICTION
+//                    // success but not return 200, nothing we have here, repeat the process
+//                    showDebug("Prediction success but response not 200, should not be happened");
+//                    mIsProcessing = false;
+////                    startAnim = false;
+//                    hideProgressSpinKit();
+//                    hideTextProgress();
+//                    hideScanAnim();
+//                }
             }
 
             @Override
@@ -2074,10 +2109,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                         JSONObject jsonResponse = new JSONObject(payload);
                         String status = jsonResponse.getString("status");
                         String message = jsonResponse.getString("message");
-                        displayBottomMessageError(null, "Server message: " + message);
+                        displayBottomMessageError(null, getString(R.string.s_server_message) + " " + message);
                         hideProgressSpinKit();
                     } catch (JSONException e) {
-                        displayBottomMessageError(null, "Terjadi kesalahan.");
+                        displayBottomMessageError(null, getString(R.string.s_unknown_error));
                         hideProgressSpinKit();
                         e.printStackTrace();
                     }
@@ -2085,7 +2120,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     showDebug("Call API fail: ");
                     showDebug("Statuscode: " + Integer.toString(statusCode));
                     showDebug("Message: " + error.toString());
-                    displayBottomMessageError(null, "Koneksi bermasalah dengan server.");
+                    displayBottomMessageError(null, getString(R.string.s_error_att));
                     hideProgressSpinKit();
                 }
                 hideScanAnim();
@@ -2124,12 +2159,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     private void hideBlurBackground() {
         requestBlurBackground = false;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mImageViewBlur.setVisibility(View.INVISIBLE);
-                mBlurView.setVisibility(View.INVISIBLE);
-            }
+        runOnUiThread(() -> {
+            mImageViewBlur.setVisibility(View.INVISIBLE);
+            mBlurView.setVisibility(View.INVISIBLE);
         });
     }
 
@@ -2216,21 +2248,21 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     }
 
     private void speakWelcome(String name) {
-        speakFeedback("Selamat datang " + name);
+        speakFeedback(getString(R.string.s_welcome) + " " + name);
     }
 
     private void speakGoodbye(String name) {
-        speakFeedback("Sampai jumpa " + name);
+        speakFeedback(getString(R.string.s_see_u) + " " + name);
     }
 
     private void speakNoProcess() {
-        speakFeedback("Maaf, tidak dapat memproses absensi");
+        speakFeedback(getString(R.string.s_cannot_process_att));
     }
 
     private void autoModeOffline(final String userId, final String name, final Bitmap croppedBitmap) {
         // automode but offline
         showDebug("Entering Offline AutoMode");
-        showTextProgress("Mengambil data kehadiran terakhir dari database...");
+        showTextProgress(getString(R.string.s_get_last_att));
         showDebug("Getting last attendance data from local DB of this user....");
         // current datetime
         String createdAtNow = new DateUtils("-").getCurrentDate();
@@ -2266,25 +2298,24 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             if(createdDateTimeNow-lastAttendance.getEpochDateTime()<mAutoTimeout_inMillis) {
                 // eh, lo mau clockin/out lagi tong, baru bentaran lo
                 if(mAutoTimeoutHours==0) {
-                    msg = "NIK: " + userId + CARRIAGE_RETURN + "Nama: " + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                            + mAutoTimeoutMinutes
-                            + " menit. Terakhir melakukan absensi pada "
+                    msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                            + " " + mAutoTimeoutMinutes
+                            + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
                             + createdAtLast + " " + createdOn;
                 } else {
                     if(mAutoTimeoutMinutes==0) {
-                        msg = "NIK: " + userId + CARRIAGE_RETURN + "Nama: " + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                                + mAutoTimeoutHours
-                                + " jam. Terakhir melakukan absensi pada "
+                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                + " " + mAutoTimeoutHours + " "
+                                + getString(R.string.s_hour) + "." + getString(R.string.s_last_att_on)
                                 + createdAtLast + " " + createdOn;
                     } else {
-                        msg = "NIK: " + userId + CARRIAGE_RETURN + "Nama: " + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                                + mAutoTimeoutHours + " jam "
-                                + mAutoTimeoutMinutes
-                                + " menit. Terakhir melakukan absensi pada "
+                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                + " " + mAutoTimeoutMinutes
+                                + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
                                 + createdAtLast + " " + createdOn;
                     }
                 }
-                msg = msg + " WIB";
+//                msg = msg + " WIB";
                 displayBottomMessageWarning(msg);
                 hideProgressSpinKit();
                 hideScanAnim();
@@ -2322,7 +2353,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
          * If last attendance data is IN then this is OUT, and vice versa
          */
         showDebug("Entering Online AutoMode");
-        showTextProgress("Mengambil data kehadiran terakhir dari database...");
+        showTextProgress(getString(R.string.s_get_last_att));
         showDebug("Getting last attendance data from server of this user....");
         /**
          * GET LAST ATTENDANCE
@@ -2365,25 +2396,25 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                                 // eh, lo mau clockin/out lagi tong, baru bentaran lo
                                 String msg = "";
                                 if(mAutoTimeoutHours==0) {
-                                    msg = "NIK: " + userId + CARRIAGE_RETURN + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                                            + mAutoTimeoutMinutes
-                                            + " menit. " + CARRIAGE_RETURN + "Terakhir melakukan absensi pada "
+                                    msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                            + " " + mAutoTimeoutMinutes
+                                            + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
                                             + strDateAttendance + " " + strTimeAttendance;
                                 } else {
                                     if(mAutoTimeoutMinutes==0) {
-                                        msg = "NIK: " + userId + CARRIAGE_RETURN + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                                                + mAutoTimeoutHours
-                                                + " jam. " + CARRIAGE_RETURN + "Terakhir melakukan absensi pada "
+                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                                + " " + mAutoTimeoutHours + " "
+                                                + getString(R.string.s_hour) + "." + getString(R.string.s_last_att_on)
                                                 + strDateAttendance + " " + strTimeAttendance;
                                     } else {
-                                        msg = "NIK: " + userId + CARRIAGE_RETURN + name + CARRIAGE_RETURN + "Maaf, Anda hanya dapat melakukan absensi lagi setelah "
-                                                + mAutoTimeoutHours + " jam "
-                                                + mAutoTimeoutMinutes
-                                                + " menit. " + CARRIAGE_RETURN + "Terakhir melakukan absensi pada "
+                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+                                                + " " + mAutoTimeoutMinutes
+                                                + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
                                                 + strDateAttendance + " " + strTimeAttendance;
                                     }
                                 }
-                                msg = msg + " WIB";
+
+//                                msg = msg + " WIB";
                                 displayBottomMessageWarning(msg);
                                 hideProgressSpinKit();
                                 hideScanAnim();
@@ -2423,14 +2454,14 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private String mLocation = "00";
     private void postAttendanceOnline(final String userId, String name, final String status, final Bitmap croppedBitmap) {
         showDebug("Post attendance data: " + status);
-        showTextProgress("Menyimpan data kehadiran ke database");
+        showTextProgress(getString(R.string.s_save_att));
         // current date/time
         String createdAt = new DateUtils("-").getCurrentDate();
         String createdOn = new DateUtils("-").getCurrentTime();
         final long createdDateTime = new DateUtils("-").stringToEpoch(createdAt + " " + createdOn);
         Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(croppedBitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
-        byte[] byteArray = Utils.getBitmapAsByteArray(bitmapRescale);
-        String encodedThumb = Utils.getByteArrayAsString64(byteArray);
+        byte[] byteArray = Utils.bitmapToByteArray(bitmapRescale);
+        String encodedThumb = Utils.byteArrayToString64(byteArray);
 
         AsyncHttpClient client = new AsyncHttpClient();
         client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
@@ -2442,6 +2473,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         rparams.add("location", mLocation);
         rparams.add("created_at", createdAt);
         rparams.add("created_on", createdOn);
+//        rparams.add("created_on", "21:10:01.010101");
         rparams.put("thumb", encodedThumb);
         String url = URL_HTTP + oIpAndPort + URL_POST_ATTENDANCE;
         showDebug("Post to URL: " + url);
@@ -2450,29 +2482,42 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-                String response = new String(responseBody);
-                try {
-                    JSONObject jo = new JSONObject(response);
-                    String resultName = jo.getString("name");
-                    String resultUserid = jo.getString("user_id");
-                    String resultStatus = jo.getString("status");
-                    showBlurBackground();
-                    if (resultStatus.equalsIgnoreCase(STRING_CLOCK_IN)) {
-                        displayBottomAttendanceOkUIThread(mBitmapBig, name, userId, STRING_CLOCK_IN, true);
-                        speakWelcome(resultName);
-                    } else {
-                        displayBottomAttendanceOkUIThread(mBitmapBig, name, userId, STRING_CLOCK_OUT, true);
-                        speakGoodbye(resultName);
-                    }
+                if(statusCode == 200) {
+                    String response = new String(responseBody);
+                    try {
+                        JSONObject jo = new JSONObject(response);
+                        String resultName = jo.getString("name");
+//                    String resultUserid = jo.getString("user_id");
+                        String resultStatus = jo.getString("status");
+                        String image = jo.getString("image");
+                        Bitmap bImage = Utils.string64ToBitmap(image);
+                        showBlurBackground();
+                        if (resultStatus.equalsIgnoreCase(STRING_CLOCK_IN)) {
+                            displayBottomAttendanceOkUIThread(bImage, name, userId, STRING_CLOCK_IN, true);
+                            speakWelcome(resultName);
+                        } else {
+                            displayBottomAttendanceOkUIThread(bImage, name, userId, STRING_CLOCK_OUT, true);
+                            speakGoodbye(resultName);
+                        }
 
-                } catch (JSONException e) {
-                    e.printStackTrace();
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Attendance attendance = new Attendance(userId, createdDateTime, status, mLocation, croppedBitmap, "");
+                    insertAttendance(attendance);
+                    hideProgressSpinKit();
+                    hideTextProgress();
+                    hideScanAnim();
+                } else if (statusCode == 204) {
+                    // not allowed to clock in since outside shift tolerance (too early or too late already)
+
+                    hideProgressSpinKit();
+                    hideTextProgress();
+                    hideScanAnim();
+                    speakFeedback(getString(R.string.s_outside_tolerance));
+                    showDebug("Outside shift tolerance");
+                    displayBottomMessageError(null, getString(R.string.s_outside_tolerance));
                 }
-                Attendance attendance = new Attendance(userId, createdDateTime, status, mLocation, croppedBitmap, "");
-                insertAttendance(attendance);
-                hideProgressSpinKit();
-                hideTextProgress();
-                hideScanAnim();
             }
 
             @Override
@@ -2626,7 +2671,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                         }
                         if(minute>59 && mAutoMode) {
-                            displayToastError(null, "Menit tidak boleh lebih dari 59");
+                            displayToastError(null, getString(R.string.error_minutes_overflow));
 //                            dialog.dismiss();
                             return;
                         }
@@ -2640,12 +2685,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                     // evaluate waiting time for voice command
                     String textWaitingVoiceCommand = edtWaitingVoice.getText().toString().trim();
                     if(textWaitingVoiceCommand.isEmpty()) {
-                        displayBottomMessageError(null, "Waktu tunggu perintah suara tidak boleh kosong");
+                        displayBottomMessageError(null, getString(R.string.s_error_wait_voice_sommand));
                         return;
                     }
                     int waitingTime = Integer.parseInt(textWaitingVoiceCommand);
                     if(waitingTime==0) {
-                        displayBottomMessageError(null, "Waktu tunggu perintah suara tidak boleh 0");
+                        displayBottomMessageError(null, getString(R.string.s_error_wait_voice_sommand));
                         return;
                     }
                     mVoiceCommandWaitingTimer = waitingTime;
@@ -2677,8 +2722,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void onLocationClick() {
         new LovelyTextInputDialog(this)
                 .setTopColorRes(R.color.colorPrimary)
-                .setTitle("Pengaturan Terminal ID")
-                .setMessage("Terminal ID:")
+                .setTitle(getString(R.string.title_terminal_id_setting))
+                .setMessage(getString(R.string.terminal_id))
                 .setIcon(R.drawable.ic_location)
                 .setInitialInput(mLocation)
                 .setCancelable(false)
@@ -2692,7 +2737,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //                        hideBlurBackground();
                     }
                 })
-                .setNegativeButton("Batal", new View.OnClickListener() {
+                .setNegativeButton(getString(R.string.cancel), new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
 //                        hideBlurBackground();
@@ -2722,21 +2767,21 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         final EditText edtDelayedFinish = dialogView.findViewById(R.id.edt_delayed_finish);
         edtDelayedFinish.setText(Integer.toString(mDelayTimeBetweenProcess));
         NoboButton btnExit = dialogView.findViewById(R.id.btn_exit);
-        btnExit.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
-        NoboButton btnLock = dialogView.findViewById(R.id.btn_lock);
-        btnLock.setEnabled(!mIsMenuLocked);
-        btnLock.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mIsMenuLocked = true;
-                dialog.dismiss();
-            }
-        });
+//        btnExit.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                finish();
+//            }
+//        });
+//        NoboButton btnLock = dialogView.findViewById(R.id.btn_lock);
+//        btnLock.setEnabled(!mIsMenuLocked);
+//        btnLock.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                mIsMenuLocked = true;
+//                dialog.dismiss();
+//            }
+//        });
 
         ck3.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -2777,121 +2822,85 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             }
         });
 
-        NoboButton btnChangePin = dialogView.findViewById(R.id.btn_change_pin);
-        btnChangePin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                String oldPin = getMenuPassword();
-                EditText edtOldPin = dialogView.findViewById(R.id.edt_old_pin);
-                EditText newPin1 = dialogView.findViewById(R.id.edt_new_pin_1);
-                EditText newPin2 = dialogView.findViewById(R.id.edt_new_pin_2);
-                if(edtOldPin.getText().toString().isEmpty() || newPin1.getText().toString().isEmpty()
-                || newPin2.getText().toString().isEmpty()) {
-                    displayToastError(null, "Old & New PIN cannot be empty");
-                    return;
-                }
-                if(edtOldPin.getText().toString().equalsIgnoreCase(oldPin)) {
-                    if(newPin1.getText().toString().equalsIgnoreCase(newPin2.getText().toString())) {
-                        if(newPin1.getText().toString().equalsIgnoreCase(oldPin)) {
-                            displayToastError(null, "New PIN cannot be the same with old PIN");
-                        } else {
-                            String newPin = newPin1.getText().toString();
-                            Prefs.putString(PREF_PIN_MENU, newPin);
-                            displayToastSuccess("PIN changed.");
-                            dialog.dismiss();
-                        }
-                    } else {
-                        displayToastError(null, "New PINs are not the same");
-                    }
-                } else {
-                    displayToastError(null, "Wrong old PIN");
-                }
-            }
-        });
+//        NoboButton btnChangePin = dialogView.findViewById(R.id.btn_change_pin);
+//        btnChangePin.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                String oldPin = getMenuPassword();
+//                EditText edtOldPin = dialogView.findViewById(R.id.edt_old_pin);
+//                EditText newPin1 = dialogView.findViewById(R.id.edt_new_pin_1);
+//                EditText newPin2 = dialogView.findViewById(R.id.edt_new_pin_2);
+//                if(edtOldPin.getText().toString().isEmpty() || newPin1.getText().toString().isEmpty()
+//                || newPin2.getText().toString().isEmpty()) {
+//                    displayToastError(null, getString(R.string.error_pin_empty));
+//                    return;
+//                }
+//                if(edtOldPin.getText().toString().equalsIgnoreCase(oldPin)) {
+//                    if(newPin1.getText().toString().equalsIgnoreCase(newPin2.getText().toString())) {
+//                        if(newPin1.getText().toString().equalsIgnoreCase(oldPin)) {
+//                            displayToastError(null, getString(R.string.error_pin_same));
+//                        } else {
+//                            String newPin = newPin1.getText().toString();
+//                            Prefs.putString(PREF_PIN_MENU, newPin);
+//                            displayToastSuccess(getString(R.string.s_pin_changed));
+//                            dialog.dismiss();
+//                        }
+//                    } else {
+//                        displayToastError(null, getString(R.string.error_new_pin_not_same));
+//                    }
+//                } else {
+//                    displayToastError(null, getString(R.string.error_wrong_old_pin));
+//                }
+//            }
+//        });
 
         dialog.show();
     }
 
     private void displayBottomMessageSuccess(String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                displayBottomMessage(MESSAGE_SUCCESS, message);
-            }
-        });
+        runOnUiThread(() -> displayBottomMessage(MESSAGE_SUCCESS, message));
     }
 
     private void displayToastSuccess(String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                DynamicToast.makeSuccess(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
+        runOnUiThread(() -> DynamicToast.makeSuccess(getApplicationContext(), message, Toast.LENGTH_LONG).show());
     }
 
     private void displayBottomMessageWarning(String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                displayBottomMessage(MESSAGE_WARNING, message);
-            }
-        });
+        runOnUiThread(() -> displayBottomMessage(MESSAGE_WARNING, message));
     }
 
     private void displayToastWarning(String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                DynamicToast.makeWarning(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-            }
-        });
+        runOnUiThread(() -> DynamicToast.makeWarning(getApplicationContext(), message, Toast.LENGTH_LONG).show());
     }
 
     private void displayBottomMessageError(Throwable throwable, String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(throwable!=null && mDebug == true) {
-                    DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
-                    delayedFinishProcessFlag();
-                } else {
-                    displayBottomMessage(MESSAGE_ERROR, message);
-                }
+        runOnUiThread(() -> {
+            if(throwable!=null && mDebug == true) {
+                DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
+                delayedFinishProcessFlag();
+            } else {
+                displayBottomMessage(MESSAGE_ERROR, message);
             }
         });
     }
 
     private void displayToastError(Throwable throwable, String message) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                if(throwable!=null && mDebug == true) {
-                    DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
-                } else {
-                    DynamicToast.makeError(getApplicationContext(), message, Toast.LENGTH_LONG).show();
-                }
+        runOnUiThread(() -> {
+            if(throwable!=null && mDebug == true) {
+                DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
+            } else {
+                DynamicToast.makeError(getApplicationContext(), message, Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void displayBottomMessageUnknown() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                displayBottomMessage(MESSAGE_PERSON_UNKNOWN, "Tidak dikenal");
-            }
-        });
+        runOnUiThread(() -> displayBottomMessage(MESSAGE_PERSON_UNKNOWN, getString(R.string.s_unknown_face)));
     }
 
     private CountDownAnimation mCountDownAnimation;
     private void displayBottomAttendanceConfirmUIThread(String nik, String name, Bitmap face, boolean online) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                displayBottomAttendanceConfirm(nik, name, face, online);
-            }
-        });
+        runOnUiThread(() -> displayBottomAttendanceConfirm(nik, name, face, online));
     }
 
     private void displayBottomAttendanceConfirm(String nik, String name, Bitmap face, boolean online) {
@@ -2930,7 +2939,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         TextView textViewTime = findViewById(R.id.tv_time_c);
         SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
         String textTime = sdft.format(d);
-        textViewTime.setText(textTime + " WIB");
+//        textViewTime.setText(textTime + " WIB");
 
         // set online/offline
         CompoundIconTextView textViewOffline = findViewById(R.id.tv_offline_c);
@@ -3050,13 +3059,15 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         TextView textViewTime = findViewById(R.id.tv_time);
         SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
         String textTime = sdft.format(d);
-        textViewTime.setText(textTime + " WIB");
+        textViewTime.setText(textTime);
         //
         CircleImage ci = findViewById(R.id.iv_thumb);
-        if(mAutoMode)
-            ci.setImageBitmap(face);
-        else
-            ci.setImageBitmap(mBitmapBig2);
+        ci.setImageBitmap(face);
+//        if(mAutoMode)
+//            ci.setImageBitmap(face);
+//        else
+//            ci.setImageBitmap(mBitmapBig);
+//            ci.setImageBitmap(mBitmapBig2);
 
         final Handler handler  = new Handler();
         final Runnable runnable = new Runnable() {
@@ -3112,7 +3123,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 //            mIsProcessing = false;
             hideProgressSpinKit();
             displayBottomAttendanceOk(face, name, userId, attType, online);
-            speakFeedback("Dibatalkan.");
+            speakFeedback(getString(R.string.s_cancelled));
         } else if(attType.equals(STRING_CLOCK_IN)) {
             if(online) {
 //                showDebug("IN clicked on offline mode");
@@ -3152,20 +3163,17 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         stopListeningVoiceCommand();
         resetSpeechRecognizerUIThread();
 //        hideBlurBackground();
-        displayBottomMessageSuccess("Tidak ada respon, data kehadiran tidak diproses.");
-        speakFeedback("Dibatalkan.");
+        displayBottomMessageSuccess(getString(R.string.s_no_response_att));
+        speakFeedback(getString(R.string.s_cancelled));
         hideProgressSpinKit();
     }
 
     private void delayedFinishProcessFlag() {
         final Handler handler = new Handler();
-        final Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                showDebug("DELAYED FINISH PROCESS FLAG");
-                mIsProcessing = false;
+        final Runnable runnable = () -> {
+            showDebug("DELAYED FINISH PROCESS FLAG");
+            mIsProcessing = false;
 
-            }
         };
         handler.postDelayed(runnable, mDelayTimeBetweenProcess);
     }
@@ -3233,36 +3241,35 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 .playOn(relativeLayout);
 
         Handler handler = new Handler();
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                YoYo.with(Techniques.SlideOutDown)
-                        .duration(500)
-                        .withListener(new Animator.AnimatorListener() {
-                            @Override
-                            public void onAnimationStart(Animator animator) {
+        Runnable runnable = () -> {
+            YoYo.with(Techniques.SlideOutDown)
+                    .duration(500)
+                    .withListener(new Animator.AnimatorListener() {
+                        @Override
+                        public void onAnimationStart(Animator animator) {
 
-                            }
+                        }
 
-                            @Override
-                            public void onAnimationEnd(Animator animator) {
-                                hideBlurBackground();
-                            }
+                        @Override
+                        public void onAnimationEnd(Animator animator) {
+                            delayedFinishProcessFlag();
+                            hideBlurBackground();
 
-                            @Override
-                            public void onAnimationCancel(Animator animator) {
+                        }
 
-                            }
+                        @Override
+                        public void onAnimationCancel(Animator animator) {
 
-                            @Override
-                            public void onAnimationRepeat(Animator animator) {
+                        }
 
-                            }
-                        })
-                        .playOn(relativeLayout)
-                        ;
-                delayedFinishProcessFlag();
-            }
+                        @Override
+                        public void onAnimationRepeat(Animator animator) {
+
+                        }
+                    })
+                    .playOn(relativeLayout)
+                    ;
+//            delayedFinishProcessFlag();
         };
         handler.postDelayed(runnable, 4000);
 
@@ -3316,18 +3323,18 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 edtSmtpTo.getText().toString().trim().isEmpty() ||
                 edtSmtpPassword.getText().toString().isEmpty() ||
                 edtEmailtime.getText().toString().trim().isEmpty()) {
-                    displayToastError(null, "Data tidak boleh kosong");
+                    displayToastError(null, "");
                     return;
                 }
                 String emailTime = edtEmailtime.getText().toString();
                 int hour = Integer.parseInt(emailTime.split(":")[0]);
                 int min = Integer.parseInt(emailTime.split(":")[1]);
                 if(hour>23) {
-                    displayToastError(null, "Jam tidak boleh lebih dari 23");
+                    displayToastError(null, getString(R.string.error_hour_overflow));
                     return;
                 }
                 if(min>59) {
-                    displayToastError(null, "Menit tidak boleh lebih dari 59");
+                    displayToastError(null, getString(R.string.error_minutes_overflow));
                     return;
                 }
 
@@ -3378,9 +3385,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 String dateFrom = edtFrom.getText().toString();
                 String dateTo = edtTo.getText().toString();
                 boolean s = sendMail(dateFrom, dateTo);
-                if(!s) displayToastError(null, "Tidak ada data absensi diantara tanggal tersebut");
+                if(!s) displayToastError(null, getString(R.string.s_no_att_data_between_date));
                 else {
-                    displayToastSuccess("Email terkirim");
+                    displayToastSuccess(getString(R.string.s_email_sent));
                     dialog.dismiss();
 //                    hideBlurBackground();
                 }
@@ -3432,8 +3439,8 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             return false;
         }
         final String content = lines;
-        String subject1 = "Alpharai Absensi " + fromDate + "-" + toDate;
-        subject1 = subject1.replace("-", " sd ");
+        String subject1 = getString(R.string.title_csv)+ " " + fromDate + "-" + toDate;
+        subject1 = subject1.replace("-", " " + getString(R.string.s_to) + " ");
         final String subject = subject1.replace("/", "-");
         SendEmailService.getInstance(
                 mSmtpHost, mSmtpPort, mSmtpSender, mSmtpReceiver,
@@ -3475,55 +3482,62 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         final EditText edtSync = dialogView.findViewById(R.id.edt_sync);
         final EditText edtIp = dialogView.findViewById(R.id.edt_ip);
         final EditText edtPort = dialogView.findViewById(R.id.edt_port);
+        final CheckBox ckOffline = dialogView.findViewById(R.id.ck_offline);
+
+        ckOffline.setChecked(Prefs.getBoolean(PREF_ENABLE_OFFLINE, mEnableOffline));
         edtSync.setText(Integer.toString(Prefs.getInt(PREF_SYNC_TIMEOUT, 30)));
         String[] ip = oIpAndPort.split(":");
         edtIp.setText(ip[0]);
         if(ip.length==2)
             edtPort.setText(ip[1]);
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String textIp = edtIp.getText().toString().trim();
-                if(textIp.isEmpty()) {
-                    displayToastError(null, "IP tidak boleh kosong");
-                    return;
-                }
-                displayProgressSpinKit();
-                String textPort = edtPort.getText().toString().trim();
-                String finalTextIp_ = textIp;
-                if(!textPort.isEmpty())
-                   finalTextIp_  = textIp + ":" + textPort; //SERVER_PORT;
-                final String finalTextIp = finalTextIp_;
-                // ping the address
-                AsyncHttpClient client = new AsyncHttpClient();
-                client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
-                client.setResponseTimeout(RESPONSE_TIMEOUT);
-                client.setConnectTimeout(CONNECT_TIMEOUT);
-                String url = URL_HTTP + finalTextIp + URL_GET_PING;
-                client.get(url, new AsyncHttpResponseHandler() {
-                    @Override
-                    public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                        Prefs.putString(PREF_DB_IP, finalTextIp);
-                        oIpAndPort = finalTextIp;
-                        Prefs.putString(PREF_DB_IP, finalTextIp);
+        btnSave.setOnClickListener(v -> {
+            String textIp = edtIp.getText().toString().trim();
+            if(textIp.isEmpty()) {
+                displayToastError(null, getString(R.string.s_error_ip_empty));
+                return;
+            }
+            displayProgressSpinKit();
+            String textPort = edtPort.getText().toString().trim();
+            String finalTextIp_ = textIp;
+            if(!textPort.isEmpty())
+               finalTextIp_  = textIp + ":" + textPort; //SERVER_PORT;
+            final String finalTextIp = finalTextIp_;
+            // ping the address
+            AsyncHttpClient client = new AsyncHttpClient();
+            client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+            client.setResponseTimeout(RESPONSE_TIMEOUT);
+            client.setConnectTimeout(CONNECT_TIMEOUT);
+            String url = URL_HTTP + finalTextIp + URL_GET_PING;
+            client.get(url, new AsyncHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+                    // enable offline
+                    mEnableOffline = ckOffline.isChecked();
+                    Prefs.putBoolean(PREF_ENABLE_OFFLINE, mEnableOffline);
+                    // IP+Port
+                    Prefs.putString(PREF_DB_IP, finalTextIp);
+                    oIpAndPort = finalTextIp;
+                    Prefs.putString(PREF_DB_IP, finalTextIp);
+                    // Timeout
+                    if(mEnableOffline) {
                         String textTimeout = edtSync.getText().toString().trim();
                         mSyncTimeout = Integer.parseInt(textTimeout);
                         Prefs.putInt(PREF_SYNC_TIMEOUT, mSyncTimeout);
                         startSyncTimer();
-                        displayToastSuccess("Pengaturan berhasil disimpan");
-                        dialog.dismiss();
-                        hideBlurBackground();
-                        hideProgressSpinKit();
                     }
+                    displayToastSuccess(getString(R.string.s_success_save_offline));
+                    dialog.dismiss();
+//                    hideBlurBackground();
+                    hideProgressSpinKit();
+                }
 
-                    @Override
-                    public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                        displayToastError(null, "Server tidak terhubung, alamat IP tidak berhasil disimpan");
-                        hideProgressSpinKit();
-                    }
-                });
+                @Override
+                public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+                    displayToastError(null, getString(R.string.s_error_save_offline));
+                    hideProgressSpinKit();
+                }
+            });
 
-            }
         });
         btnSync.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -3557,7 +3571,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         final EditText edtTimoutFace = dialogView.findViewById(R.id.edt_timeout_face);
         edtTimoutFace.setText(stringTimeout);
         NiceSpinner niceSpinner = dialogView.findViewById(R.id.spinner_distance_face);
-        List<String> dataset = new LinkedList<>(Arrays.asList("Dekat", "Sedang", "Jauh"));
+        List<String> dataset = new LinkedList<>(Arrays.asList(getString(R.string.s_near), getString(R.string.s_medium), getString(R.string.s_far)));
         niceSpinner.attachDataSource(dataset);
         int distanceFace = Prefs.getInt(PREF_FD_DISTANCE, FACE_MEDIUM);
         niceSpinner.setSelectedIndex(distanceFace);
@@ -3712,12 +3726,12 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                     setBitmap(croppedBitmap);
                     mCroppedBitmap = croppedBitmap;
-                    byte[] bArray = Utils.getBitmapAsByteArray(scaledBitmap);
-                    String string64 = Utils.getByteArrayAsString64(bArray);
+                    byte[] bArray = Utils.bitmapToByteArray(scaledBitmap);
+                    String string64 = Utils.byteArrayToString64(bArray);
                     if(mSupport64bit) {
                         PyObject ret = mPyObjectLiveness.callAttr("isFakePrint", string64);
                         Log.d(TAG, "SPOOF: " + ret.toString());
-                        showDebug("Liveness Score: " + ret.toString());
+//                        showDebug("Liveness Score: " + ret.toString());
                         Message msg = mHandlerTimer.obtainMessage();
                         msg.what = THREAD_LIVENESS;
                         Bundle b = new Bundle();
@@ -3998,10 +4012,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
     private void processFrame(final DetectionProto.Detection detection, final boolean online) {
         if(!online) {
             showDebug("OFFLINE MODE");
-            showTextProgress("Tidak terkoneksi dengan server, berganti ke mode offline");
+            showTextProgress(getString(R.string.s_error_server_change_offline));
         } else {
             showDebug("ONLINE MODE");
-            showTextProgress("Terkoneksi dengan server");
+            showTextProgress(getString(R.string.s_server_connected));
         }
         runInBackground(new Runnable() {
             @Override
@@ -4102,7 +4116,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                             float deltay = DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
                             float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
                             float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
-                            float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
+                            float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltay}; //deltax};
                             // re-calculate the size
                             float crop_w = bb_right_top_1[0] - bb_left_top_1[0];
                             float crop_h = bb_left_bottom_1[1] - bb_left_top_1[1];
@@ -4132,9 +4146,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
                             if(online) {
                                 if(mAutoMode)
-                                    predictOnline(croppedBitmap);
+                                    autoAttendancePost(croppedBitmap); // NEW !!!
                                 else
-                                    postAutoModeOnline(croppedBitmap); // NEW !!!
+                                    predictOnline(croppedBitmap);
                             } else {
                                 predictOffline(croppedBitmap);
                             }
@@ -4263,9 +4277,9 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             hideProgressGreen();
             if(success)
 //                displayToastSuccess("Database synced successfully.");
-                displayToastSuccess("Berhasil mensinkronkan data dengan server.");
+                displayToastSuccess(getString(R.string.s_sync_success));
             else
-                displayToastError(null,  "Gagal mensinkronkan data dengan server");
+                displayToastError(null,  getString(R.string.s_sync_fail));
 
         }
     }

@@ -24,11 +24,11 @@ public class User {
         this.division = division;
 
         this.crop = cropped;
-        blobCrop = Utils.getBitmapAsByteArray(cropped);
+        blobCrop = Utils.bitmapToByteArray(cropped);
 
         this.full = full;
         Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(full, Utils.USER_IMAGE_MAX_WIDTH);
-        blobFull = Utils.getBitmapAsByteArray(bitmapRescale);
+        blobFull = Utils.bitmapToByteArray(bitmapRescale);
 
     }
 

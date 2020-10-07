@@ -48,7 +48,7 @@
             android:textColor="#000"
             android:textSize="22sp"
             android:textStyle="bold"
-            android:text="Apakah Anda sedang melakukan"/>
+            android:text="@string/attendance_confirm"/>
 
         <RelativeLayout
             android:layout_width="match_parent"

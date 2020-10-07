@@ -44,7 +44,7 @@ public class Attendance {
         this.status = status;
         this.location = location;
         Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
-        this.blobImage = Utils.getBitmapAsByteArray(bitmapRescale);
+        this.blobImage = Utils.bitmapToByteArray(bitmapRescale);
 //        this.base64Image = Utils.getByteArrayAsString64(this.blobImage);
         this.unSent = unSent;
     }
@@ -65,9 +65,9 @@ public class Attendance {
         this.location = location;
 //        this.blobImage = bitmapBlob;
 //        this.base64Image = Utils.getByteArrayAsString64(this.blobImage);
-        Bitmap bitmap = Utils.getBitmapFromByteArray(bitmapBlob);
+        Bitmap bitmap = Utils.byteArrayToBitmap(bitmapBlob);
         Bitmap bitmapRescale = Utils.scaleImageKeepAspectRatio(bitmap, Utils.ATTENDANCE_THUMB_MAX_WIDTH);
-        byte[] bitmapByte = Utils.getBitmapAsByteArray(bitmapRescale);
+        byte[] bitmapByte = Utils.bitmapToByteArray(bitmapRescale);
 //        this.base64Image = Utils.getByteArrayAsString64(bitmapByte);
         this.unSent = unSent;
     }

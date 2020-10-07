@@ -89,7 +89,7 @@ public class BottomSheetFragmentConfirm extends BottomSheetDialogFragment {
         //
         mId = getArguments().getString(MainActivity.ARGS_ID); // userId
         byte[] arrayByte = getArguments().getByteArray(MainActivity.ARGS_BITMAP); // face thumb bitmap
-        mFace = Utils.getBitmapFromByteArray(arrayByte); // face thumb bitmap
+        mFace = Utils.byteArrayToBitmap(arrayByte); // face thumb bitmap
         mSeconder = getArguments().getInt(MainActivity.ARGS_TIMER_WAITING_VOICE_COMMAND); // timer in second
         mNickname = getArguments().getString(MainActivity.ARGS_NICKNAME); // name
         mOnline = getArguments().getBoolean(MainActivity.ARGS_ONLINE_STATUS);

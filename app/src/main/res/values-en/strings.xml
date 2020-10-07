@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Alpharai</string>
     <string name="start_stop">Start/Stop Program</string>
@@ -29,8 +30,8 @@
     <string name="s_no_record_db">No record in database.</string>
     <string name="s_unknown_face">No match</string>
     <string name="s_hello">Hello</string>
-    <string name="s_your_nik">Your Emp.ID:</string>
-    <string name="s_nik">Empl.ID:</string>
+    <string name="s_your_nik">Nomor NIK Anda:</string>
+    <string name="s_nik">NIK:</string>
     <string name="s_name">Name:</string>
     <string name="s_sorry_next_att">Sorry, you can only clock in/out after</string>
     <string name="s_hour">hour(s)</string>
@@ -55,7 +56,7 @@
     <string name="error_new_pin_not_same">New PINs are not the same</string>
     <string name="error_wrong_old_pin">Wrong old PIN</string>
     <string name="s_cancelled">Cancelled</string>
-    <string name="s_no_response_att">No respond. Attendance not saved.</string>
+    <string name="s_no_response_att">No respond. Attendance not saved</string>
     <string name="error_data_empty">Data cannot be empty</string>
     <string name="error_hour_overflow">Hour must be less or equal 23</string>
     <string name="s_no_att_data_between_date">No attendance record between these dates</string>

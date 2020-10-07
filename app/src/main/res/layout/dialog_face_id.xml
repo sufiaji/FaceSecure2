@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="24dp"
         android:layout_marginTop="8dp"
-        android:text="Pengaturan Deteksi Wajah"
+        android:text="@string/title_face_detection_setting"
         android:textColor="#000000"
         android:textSize="@dimen/dialog_font_title"
         android:textStyle="bold" />
@@ -37,14 +37,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Waktu tunggu deteksi wajah (dalam detik). Proses absensi hanya akan dimulai jika wajah berada di depan kamera selama lebih dari waktu tunggu berikut:"/>
+            android:text="@string/title_wait_time_fd"/>
 
         <EditText
             android:id="@+id/edt_timeout_face"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="contoh: 5"/>
+            android:hint="@string/hints_wait__time"/>
 
     </LinearLayout>
 
@@ -59,14 +59,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Matikan layar setelah sekian detik:"/>
+            android:text="@string/title_wait_screen"/>
 
         <EditText
             android:id="@+id/edt_standby_timeout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="contoh: 30"/>
+            android:hint="@string/hints_30"/>
 
     </LinearLayout>
 
@@ -82,13 +82,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="Kotak di sekitar wajah"/>
+            android:text="@string/s_rect_face"/>
         <CheckBox
             android:id="@+id/ck_liveness"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="Jgn proses jika Liveness Detection tdk tersedia"/>
+            android:text="@string/s_enable_liveness"/>
     </LinearLayout>
 
     <LinearLayout
@@ -104,7 +104,7 @@
             android:layout_height="28dp"
             android:layout_gravity="center_vertical"
             android:gravity="center_vertical"
-            android:text="Jarak deteksi wajah:"
+            android:text="@string/s_fd_distance"
             android:layout_marginRight="4dp"
             android:textSize="@dimen/dialog_font_content" />
 
@@ -129,7 +129,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            app:nb_text="Simpan"
+            app:nb_text="@string/save"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorAccent"/>
@@ -139,7 +139,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            app:nb_text="Batal"
+            app:nb_text="@string/cancel"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorRed"/>

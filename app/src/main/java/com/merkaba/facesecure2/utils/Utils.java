@@ -16,19 +16,19 @@ public final class Utils {
 
     private Utils() {}
 
-    public static byte[] getBitmapAsByteArray(Bitmap bitmap) {
+    public static byte[] bitmapToByteArray(Bitmap bitmap) {
         ByteArrayOutputStream baosthumb = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baosthumb);
         byte[] byteArray = baosthumb.toByteArray();
         return byteArray;
     }
 
-    public static Bitmap getBitmapFromByteArray(byte[] blob) {
+    public static Bitmap byteArrayToBitmap(byte[] blob) {
         Bitmap bm = BitmapFactory.decodeByteArray(blob, 0 , blob.length);
         return bm;
     }
 
-    public static String getByteArrayAsString64(byte[] byteArray) {
+    public static String byteArrayToString64(byte[] byteArray) {
         if(byteArray!=null && byteArray.length > 0)
             return Base64.encodeToString(byteArray, Base64.DEFAULT);
         else

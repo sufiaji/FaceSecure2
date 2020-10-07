@@ -22,7 +22,7 @@
         android:layout_marginLeft="@dimen/dialog_margin_left_title"
         android:layout_marginTop="@dimen/dialog_margin_top_title"
         android:layout_marginRight="@dimen/dialog_margin_right_title"
-        android:text="Pengaturan Sync dan IP Server"
+        android:text="@string/title_sync_setting"
         android:textColor="#000000"
         android:textSize="@dimen/dialog_font_title"
         android:textStyle="bold" />
@@ -38,19 +38,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Atur IP Server dan Port"/>
+            android:text="@string/title_ip_server_port"/>
 
         <EditText
             android:id="@+id/edt_ip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="contoh IP: 192.168.100.13"/>
+            android:hint="@string/hints_ip"/>
 
         <EditText
             android:id="@+id/edt_port"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="contoh Port: 5000"/>
+            android:hint="@string/hints_port"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:orientation="vertical">
+
+        <CheckBox
+            android:id="@+id/ck_offline"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/en_offline"/>
 
     </LinearLayout>
 
@@ -65,14 +81,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Atur interval (dalam menit) untuk sinkronisasi data ke Server"/>
+            android:text="@string/title_interval"/>
 
         <EditText
             android:id="@+id/edt_sync"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:hint="contoh: 30"/>
+            android:hint="@string/hints_interval"/>
 
     </LinearLayout>
 
@@ -88,7 +104,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            app:nb_text="Simpan"
+            app:nb_text="@string/save"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorAccent"/>
@@ -97,7 +113,7 @@
             android:layout_toLeftOf="@id/btn_sync_save"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:nb_text="Sinkronkan Sekarang"
+            app:nb_text="@string/sync_now"
             app:nb_textStyle="bold"
             android:layout_marginRight="16dp"
             app:nb_backgroundColor="#00ffffff"
@@ -107,7 +123,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            app:nb_text="Batal"
+            app:nb_text="@string/cancel"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorRed"/>

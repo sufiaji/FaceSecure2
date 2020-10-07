@@ -33,7 +33,7 @@
             android:textSize="22sp"
             android:textStyle="bold"
             android:textColor="#000000"
-            android:text="Halo <name>, update foto Anda?" />
+            android:text="Halo NoName, update foto Anda?" />
 
         <LinearLayout
             android:id="@+id/ly_button"
@@ -48,14 +48,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginRight="8dp"
-                android:text="Batal"
+                android:text="@string/cancel"
                 android:background="@drawable/layout_button_round"/>
             <Button
                 android:id="@+id/btn_update_update"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:text="Update"
+                android:text="@string/update"
                 android:textColor="@color/colorRed"
                 android:background="@drawable/layout_button_round"/>
         </LinearLayout>
@@ -86,7 +86,7 @@
                     android:id="@+id/tv_time"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="08:35 WIB"
+                    android:text="08:35"
                     android:textColor="#000000"
                     android:textSize="14sp"/>
             </LinearLayout>

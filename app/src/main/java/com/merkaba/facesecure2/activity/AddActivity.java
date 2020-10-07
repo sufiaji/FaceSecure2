@@ -22,6 +22,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -30,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
+import com.github.aakira.compoundicontextview.CompoundIconTextView;
 import com.google.mediapipe.components.CameraHelper;
 import com.google.mediapipe.components.ExternalTextureConverter;
 import com.google.mediapipe.components.FrameProcessor;
@@ -56,7 +58,14 @@ import com.pranavpandey.android.dynamic.toasts.DynamicToast;
 //import org.tensorflow.lite.gpu.GpuDelegate;
 //import org.tensorflow.lite.support.common.FileUtil;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -104,7 +113,7 @@ public class AddActivity extends AppCompatActivity {
 
     // size of tensorflow input
     private Size mTensorImageSize;
-    private int mTensorImageSize2 = 640;
+//    private int mTensorImageSize2 = 640;
     private CircleImage mMiniPreview;
     //
     private static final String NA = "na";
@@ -267,8 +276,8 @@ public class AddActivity extends AppCompatActivity {
         }
         final Bitmap cropped = mCroppedBitmap;
         final Bitmap fullBitmap = mOriginalBitmap;
-        mMiniPreview.setVisibility(View.VISIBLE);
-        setBitmap(fullBitmap);
+//        mMiniPreview.setVisibility(View.VISIBLE);
+//        setBitmap(fullBitmap);
         AlertDialog.Builder dialog = new AlertDialog.Builder(AddActivity.this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_new_user, null);
@@ -277,6 +286,9 @@ public class AddActivity extends AppCompatActivity {
         final EditText edtNik = dialogView.findViewById(R.id.edt_nik);
         final EditText edtName = dialogView.findViewById(R.id.edt_name);
         final EditText edtDivision = dialogView.findViewById(R.id.edt_division);
+
+        CircleImage thumbImage = dialogView.findViewById(R.id.iv_thumb_new);
+        thumbImage.setImageBitmap(fullBitmap);
 
         dialog.setPositiveButton("Simpan", new DialogInterface.OnClickListener() {
             @Override
@@ -318,8 +330,10 @@ public class AddActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                saveUserOffline(nik, name, division, cropped, fullBitmap);
-
+                if(MainActivity.mEnableOffline)
+                    saveUserOffline(nik, name, division, cropped, fullBitmap);
+                else
+                    displayToastError(null, getString(R.string.failed_register_online));
             }
         });
     }
@@ -328,8 +342,8 @@ public class AddActivity extends AppCompatActivity {
         Log.d(TAG, "Entering Predict online");
 
         final long start = SystemClock.uptimeMillis();
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
-        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+        byte[] byteArrayPhoto = Utils.bitmapToByteArray(cropped);
+        String encodedFile = Utils.byteArrayToString64(byteArrayPhoto);
         String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_GET_PREDICTION;
 
         RequestParams rparams = new RequestParams();
@@ -346,53 +360,95 @@ public class AddActivity extends AppCompatActivity {
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 if(statusCode==200) {
                     // we have match in database
-                    showDialogUpdate(nik, name, division, cropped, fullBitmap);
+                    String str = new String(responseBody);
+                    try {
+                        JSONObject jsonResponse = new JSONObject(str);
+                        JSONObject jsonObject = jsonResponse.getJSONObject(Integer.toString(1));
+                        String user_id = jsonObject.getString("user_id");
+                        String user_name = jsonObject.getString("name");
+                        showDialogUpdate(user_id, user_name, division, cropped, fullBitmap, true);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+
                 } else if(statusCode==201) {
                     // db is empty
-                    saveUserOnline(nik, name, division, cropped, fullBitmap);
+                    saveUserOnline(nik, name, division, cropped, fullBitmap, false);
                 } else if(statusCode==202) {
                     // no match, continue register
-                    saveUserOnline(nik, name, division, cropped, fullBitmap);
+                    saveUserOnline(nik, name, division, cropped, fullBitmap, false);
                 }
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                saveUserOffline(nik, name, division, cropped, fullBitmap);
-                mProgressBar.setVisibility(View.GONE);
-                displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
+                if(MainActivity.mEnableOffline)
+                    saveUserOffline(nik, name, division, cropped, fullBitmap);
+                else
+                    displayToastError(null, getString(R.string.failed_register_online));
+//                mProgressBar.setVisibility(View.GONE);
+//                displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, false);
             }
         });
     }
 
-    private void showDialogUpdate(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+    private void showDialogUpdate(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap, boolean isOnline) {
         AlertDialog.Builder builder = new AlertDialog.Builder(mContext);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_update_user, null);
+        TextView tvName = dialogView.findViewById(R.id.tv_name);
+        CircleImage circleImage = dialogView.findViewById(R.id.iv_thumb_update);
+        TextView tvDate = dialogView.findViewById(R.id.tv_date);
+        TextView tvTime = dialogView.findViewById(R.id.tv_time);
+
+        DateFormat df = DateFormat.getDateInstance(DateFormat.LONG, Locale.getDefault());
+        Date d = new Date();
+        String formattedCurrentDate = df.format(d);
+        SimpleDateFormat sdf = new SimpleDateFormat("EEEE");
+        String dayOfTheWeek = sdf.format(d);
+        tvDate.setText(dayOfTheWeek + ", " + formattedCurrentDate);
+
+        SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
+        String textTime = sdft.format(d);
+        tvTime.setText(textTime);
+
+        CompoundIconTextView tvOnline = dialogView.findViewById(R.id.tv_online);
+        CompoundIconTextView tvOffline = dialogView.findViewById(R.id.tv_offline);
+        if(isOnline) {
+            tvOnline.setVisibility(View.VISIBLE);
+            tvOffline.setVisibility(View.GONE);
+        } else {
+            tvOnline.setVisibility(View.GONE);
+            tvOffline.setVisibility(View.VISIBLE);
+        }
+
+        circleImage.setImageBitmap(fullBitmap);
+        tvName.setText(getString(R.string.s_hello) + " " + name + ", " + getString(R.string.s_update_photo));
         builder.setView(dialogView);
         builder.setCancelable(false);
         final AlertDialog alertDialog = builder.show();
 
-        Button cancelButton = findViewById(R.id.btn_update_cancel);
+        Button cancelButton = dialogView.findViewById(R.id.btn_update_cancel);
         cancelButton.setOnClickListener(view -> {
             alertDialog.dismiss();
+            mProgressBar.setVisibility(View.GONE);
         });
 
-        Button updateButton = findViewById(R.id.btn_update_update);
+        Button updateButton = dialogView.findViewById(R.id.btn_update_update);
         updateButton.setOnClickListener(view -> {
             alertDialog.dismiss();
-            saveUserOnline(nik, name, division, cropped, fullBitmap);
+            saveUserOnline(nik, name, division, cropped, fullBitmap, true);
         });
     }
 
-    private void saveUserOnline(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
+    private void saveUserOnline(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap, boolean isUpdate) {
 
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
-        String encodedFile = Utils.getByteArrayAsString64(byteArrayPhoto);
+        byte[] byteArrayPhoto = Utils.bitmapToByteArray(cropped);
+        String encodedFile = Utils.byteArrayToString64(byteArrayPhoto);
 
         Bitmap scaledBitmap = Utils.scaleImageKeepAspectRatio(fullBitmap, Utils.USER_IMAGE_MAX_WIDTH);
-        byte[] byteArrayPhoto2 = Utils.getBitmapAsByteArray(scaledBitmap);
-        String encodedFile2 = Utils.getByteArrayAsString64(byteArrayPhoto2);
+        byte[] byteArrayPhoto2 = Utils.bitmapToByteArray(scaledBitmap);
+        String encodedFile2 = Utils.byteArrayToString64(byteArrayPhoto2);
 
         String ip = Prefs.getString(MainActivity.PREF_DB_IP, MainActivity.DEFAULT_IP);
         String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_POST_NEW_USER;
@@ -407,32 +463,41 @@ public class AddActivity extends AppCompatActivity {
         rparams.add("name", name);
         rparams.put("thumb", encodedFile);
         rparams.put("image", encodedFile2);
-
-        String createdAtNow = new DateUtils("-").getCurrentDate();
-        String createdOnNow = new DateUtils("-").getCurrentTime();
-        final long createdDateTimeNow = new DateUtils("-").stringToEpoch(createdAtNow + " " + createdOnNow);
+        rparams.put("division", division);
+        if(isUpdate)
+            rparams.put("update", "X");
+        else
+            rparams.put("update", "");
 
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
                 mProgressBar.setVisibility(View.GONE);
                 if(statusCode==200) {
-                    String message = "Data berhasil disimpan" + MainActivity.CARRIAGE_RETURN + "NIK: " + nik + MainActivity.CARRIAGE_RETURN + "Nama: " + name + ")";
-                    displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, true);
+                    if(isUpdate)
+                        displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_UPDATE_PERSON, true);
+                    else
+                        displayBottomRegistrationOk(fullBitmap, name, nik, MainActivity.STRING_NEW_PERSON, true);
                 }
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                saveUserOffline(nik, name, division, cropped, fullBitmap);
+                if(MainActivity.mEnableOffline)
+                    saveUserOffline(nik, name, division, cropped, fullBitmap);
+                else
+                    if(isUpdate)
+                        displayToastError(null, getString(R.string.failed_update_online));
+                    else
+                        displayToastError(null, getString(R.string.failed_register_online));
             }
         });
     }
 
     private void saveUserOffline(String nik, String name, String division, Bitmap cropped, Bitmap fullBitmap) {
 
-        byte[] byteArrayPhoto = Utils.getBitmapAsByteArray(cropped);
-        String face64String = Utils.getByteArrayAsString64(byteArrayPhoto);
+        byte[] byteArrayPhoto = Utils.bitmapToByteArray(cropped);
+        String face64String = Utils.byteArrayToString64(byteArrayPhoto);
 
         String createdAtNow = new DateUtils("-").getCurrentDate();
         String createdOnNow = new DateUtils("-").getCurrentTime();
@@ -461,11 +526,13 @@ public class AddActivity extends AppCompatActivity {
             } else {
                 // failed insert encoding so need to delete created User
                 mDbHelper.deleteUser(idUser);
-                displayToastError(null, "Gagal registrasi user baru secara offline");
+                displayToastError(null, getString(R.string.failed_register_offline));
+                mProgressBar.setVisibility(View.GONE);
             }
         } else {
             // failed insert new user
-            displayToastError(null, "Gagal registrasi user baru secara offline");
+            displayToastError(null, getString(R.string.failed_register_offline));
+            mProgressBar.setVisibility(View.GONE);
         }
 
     }
@@ -475,7 +542,7 @@ public class AddActivity extends AppCompatActivity {
         BottomSheetFragmentOk dialog = new BottomSheetFragmentOk();
         dialog.setCancelable(false);
         Bundle bundle = new Bundle();
-        bundle.putByteArray(MainActivity.ARGS_BITMAP, Utils.getBitmapAsByteArray(face));
+        bundle.putByteArray(MainActivity.ARGS_BITMAP, Utils.bitmapToByteArray(face));
         bundle.putString(MainActivity.ARGS_ATYPE, aType);
         bundle.putString(MainActivity.ARGS_ID, nik);
         bundle.putString(MainActivity.ARGS_NICKNAME, name);
@@ -497,6 +564,7 @@ public class AddActivity extends AppCompatActivity {
     }
 
     private void displayToastError(Throwable throwable, String message) {
+        mProgressBar.setVisibility(View.GONE);
         runOnUiThread(() -> {
             if(throwable!=null && mDebug == true) {
                 DynamicToast.makeError(getApplicationContext(), throwable.toString(), Toast.LENGTH_LONG).show();
@@ -557,7 +625,7 @@ public class AddActivity extends AppCompatActivity {
                         // since tensorflow input image is scaled down, so we need to scale it up
                         // to get proper face position
                         Matrix matrixScale = new Matrix();
-                        matrixScale.setScale(previewWidth/mTensorImageSize2, 1,
+                        matrixScale.setScale(previewWidth/MainActivity.mTensorImageSize, 1,
                                 previewWidth/2, previewHeight/2);
                         // re-position the keypoints
                         matrixScale.mapPoints(left_eye);
@@ -608,7 +676,7 @@ public class AddActivity extends AppCompatActivity {
                         float deltay = MainActivity.DELTA_Y_FACE * abs(right_eye[0] - left_eye[0]);
                         float[] bb_left_top_1 = {left_eye[0] - deltax, left_eye[1] - deltay};
                         float[] bb_right_top_1 = {right_eye[0] + deltax, right_eye[1] - deltay};
-                        float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltax};
+                        float[] bb_left_bottom_1 = {left_eye[0] - deltax, mouth[1] + deltay}; //deltax};
                         // re-calculate the size
                         float crop_w = bb_right_top_1[0] - bb_left_top_1[0];
                         float crop_h = bb_left_bottom_1[1] - bb_left_top_1[1];

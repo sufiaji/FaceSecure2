@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:layout_marginLeft="8dp"
+            android:textSize="@dimen/dialog_font_title"
+            android:textColor="#000000"
+            android:text="Change PIN "/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            app:hintTextAppearance="@style/MyHintText">
+
+            <EditText
+                android:id="@+id/edt_old_pin"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberPassword"
+                android:textSize="13sp"
+                android:hint="Old PIN"
+                android:maxLength="4"
+                android:theme="@style/MyEditText"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            app:hintTextAppearance="@style/MyHintText">
+
+            <EditText
+                android:id="@+id/edt_new_pin_1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberPassword"
+                android:textSize="13sp"
+                android:hint="New PIN"
+                android:maxLength="4"
+                android:theme="@style/MyEditText"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="12dp"
+            app:hintTextAppearance="@style/MyHintText">
+
+            <EditText
+                android:id="@+id/edt_new_pin_2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="12dp"
+                android:inputType="numberPassword"
+                android:textSize="13sp"
+                android:hint="Retype New PIN"
+                android:maxLength="4"
+                android:theme="@style/MyEditText"/>
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.ornach.nobobutton.NoboButton
+            android:id="@+id/btn_change_pin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:layout_marginRight="12dp"
+            android:layout_marginBottom="12dp"
+            app:nb_backgroundColor="@color/colorPrimary"
+            app:nb_textStyle="bold"
+            app:nb_focusColor="@color/colorPrimaryDark"
+            app:nb_radius="5dp"
+            app:nb_text="CHANGE PIN"
+            app:nb_textColor="#fff"/>
+
+
+
+    <com.ornach.nobobutton.NoboButton
+        android:id="@+id/btn_lock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        app:nb_backgroundColor="@color/colorPurple"
+        app:nb_textStyle="bold"
+        app:nb_focusColor="@color/colorPurpleDark"
+        app:nb_radius="5dp"
+        app:nb_text="LOCK MENU"
+        app:nb_textColor="#fff"/>
+
+    <com.ornach.nobobutton.NoboButton
+        android:id="@+id/btn_exit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="36dp"
+        android:layout_marginRight="36dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="18dp"
+        app:nb_backgroundColor="@color/colorRed"
+        app:nb_textStyle="bold"
+        app:nb_focusColor="#f00"
+        app:nb_radius="5dp"
+        app:nb_text="EXIT PROGRAM"
+        app:nb_textColor="#fff"/>
+
+</LinearLayout>

@@ -39,11 +39,13 @@ public class BottomSheetFragmentOk extends BottomSheetDialogFragment {
         String atype = getArguments().getString(MainActivity.ARGS_ATYPE);
         TextView tvGreet = view.findViewById(R.id.tv_greet);
         if(atype.equalsIgnoreCase(MainActivity.STRING_CLOCK_IN)) {
-            tvGreet.setText("Selamat Datang");
+            tvGreet.setText(getString(R.string.s_welcome));
         } else if(atype.equalsIgnoreCase(MainActivity.STRING_CLOCK_OUT)) {
-            tvGreet.setText("Sampai Jumpa");
+            tvGreet.setText(getString(R.string.s_see_u));
         } else if(atype.equalsIgnoreCase(MainActivity.STRING_NEW_PERSON)) {
-            tvGreet.setText("Registrasi berhasil");
+            tvGreet.setText(getString(R.string.success_register));
+        } else if(atype.equalsIgnoreCase(MainActivity.STRING_UPDATE_PERSON)) {
+            tvGreet.setText(getString(R.string.success_update));
         }
         //2
         String name = getArguments().getString(MainActivity.ARGS_NICKNAME);
@@ -66,7 +68,7 @@ public class BottomSheetFragmentOk extends BottomSheetDialogFragment {
         }
         //5
         byte[] arrayByte = getArguments().getByteArray(MainActivity.ARGS_BITMAP); // face thumb bitmap
-        Bitmap face = Utils.getBitmapFromByteArray(arrayByte); // face thumb bitmap
+        Bitmap face = Utils.byteArrayToBitmap(arrayByte); // face thumb bitmap
         CircleImage ci = view.findViewById(R.id.iv_thumb);
         ci.setImageBitmap(face);
 
@@ -80,7 +82,7 @@ public class BottomSheetFragmentOk extends BottomSheetDialogFragment {
         TextView textViewTime = view.findViewById(R.id.tv_time);
         SimpleDateFormat sdft = new SimpleDateFormat("HH:mm");
         String textTime = sdft.format(d);
-        textViewTime.setText(textTime + " WIB");
+        textViewTime.setText(textTime);
     }
 
     @Override

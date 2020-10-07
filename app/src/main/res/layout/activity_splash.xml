@@ -17,6 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="96dp"
         android:layout_marginRight="32dp"
+        android:layout_marginLeft="32dp"
         android:gravity="right"
         android:orientation="vertical">
         <TextView
@@ -32,7 +33,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Facial Biometric for Time Attendance"
+            android:text="@string/title_splash"
             android:gravity="right"
             android:textColor="#ffff"
             android:textSize="21sp"

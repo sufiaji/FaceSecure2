@@ -26,7 +26,7 @@
         android:layout_marginTop="@dimen/dialog_margin_top_title"
         android:layout_marginRight="@dimen/dialog_margin_right_title"
         android:textColor="#000000"
-        android:text="Pengaturan Perintah Suara dan Mode Auto"/>
+        android:text="@string/setting_voice"/>
 
     <CheckBox
         android:layout_marginTop="18dp"
@@ -48,14 +48,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Set timeout absensi untuk orang yang sama (HH:MM). Selama masih dalam interval waktu yg diset dibawah ini, orang yang sama tidak dapat melakukan absensi"/>
+            android:text="@string/s_threshold_att"/>
 
         <com.vicmikhailau.maskededittext.MaskedEditText
             android:id="@+id/edt_timeout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:mask="##:##"
-            android:hint="contoh: 08:00"/>
+            android:hint="@string/hints_time_att"/>
 
     </LinearLayout>
 
@@ -66,7 +66,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="36dp"
-        android:text="Aktifkan Feedback Suara"/>
+        android:text="@string/s_enable_voice_feedback"/>
 
     <CheckBox
         android:enabled="false"
@@ -74,7 +74,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="36dp"
-        android:text="Aktifkan Perintah Suara"/>
+        android:text="@string/s_enable_voice_command"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -87,14 +87,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="@dimen/dialog_font_content"
-            android:text="Waktu tunggu perintah suara (dalam detik)"/>
+            android:text="@string/s_waiting_time_voice_command"/>
 
         <EditText
             android:id="@+id/edt_waiting_voice"
             android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="contoh: 10"/>
+            android:hint="@string/hints_5"/>
 
     </LinearLayout>
 
@@ -107,7 +107,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentRight="true"
-            app:nb_text="Simpan"
+            app:nb_text="@string/save"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorAccent"/>
@@ -117,7 +117,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentLeft="true"
-            app:nb_text="Batal"
+            app:nb_text="@string/cancel"
             app:nb_textStyle="bold"
             app:nb_backgroundColor="#00ffffff"
             app:nb_textColor="@color/colorRed"/>

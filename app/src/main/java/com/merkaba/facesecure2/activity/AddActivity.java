@@ -351,9 +351,9 @@ public class AddActivity extends AppCompatActivity {
         rparams.put("threshold", MainActivity.oThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
 
-        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
-        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
-        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
+//        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
+//        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
+//        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
 
         client.post(url, rparams, new AsyncHttpResponseHandler() {
             @Override
@@ -454,9 +454,9 @@ public class AddActivity extends AppCompatActivity {
         String url = MainActivity.URL_HTTP + MainActivity.oIpAndPort + MainActivity.URL_POST_NEW_USER;
         AsyncHttpClient client = new AsyncHttpClient();
 
-        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
-        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
-        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
+//        client.setConnectTimeout(MainActivity.CONNECT_TIMEOUT);
+//        client.setMaxRetriesAndTimeout(MainActivity.MAX_RETRIES, MainActivity.MAX_RETRIES_TIMEOUT);
+//        client.setResponseTimeout(MainActivity.RESPONSE_TIMEOUT);
 
         RequestParams rparams = new RequestParams();
         rparams.add("user_id", nik);

@@ -1762,10 +1762,10 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
 
-                String response = new String(responseBody);
 
                 if(statusCode==200) {
                     try {
+                        String response = new String(responseBody);
                         JSONObject jo = new JSONObject(response);
                         String resultUserid = jo.getString("user_id");
                         String resultName = jo.getString("name");
@@ -1810,6 +1810,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 } else if (statusCode == 203) {
                     // not allowed to post because still within range (auto mode)
                     try {
+                        String response = new String(responseBody);
                         JSONObject jo = new JSONObject(response);
                         String uid = jo.getString("user_id");
                         String name = jo.getString("name");
@@ -1931,9 +1932,13 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
         rparams.put("threshold", oThresholdDistanceFaceEmbedding);
         AsyncHttpClient client = new AsyncHttpClient();
 
-        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
-        client.setResponseTimeout(RESPONSE_TIMEOUT);
-        client.setConnectTimeout(CONNECT_TIMEOUT);
+//        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+//        client.setResponseTimeout(RESPONSE_TIMEOUT);
+//        client.setConnectTimeout(CONNECT_TIMEOUT);
+
+        client.setMaxRetriesAndTimeout(100, 10000);
+        client.setResponseTimeout(10000);
+        client.setConnectTimeout(10000);
 
         showDebug(url);
         client.post(url, rparams, new AsyncHttpResponseHandler() {
@@ -1994,111 +1999,7 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
                 } finally {
                     showDebug(msg);
                 }
-                //
-                //
-                //
-//                if(statusCode==200) {
-//                    String msg = ">>> ";
-//                    String name = "";
-//                    String user_id = "";
-//                    String firstName = "";
-//                    String firstUserid = "";
-//                    boolean emptyEncoding = false;
-//                    try {
-////                        String str = new String(responseBody);
-//                        if(str.contains("empty encoding"))
-//                            emptyEncoding = true;
-//                        JSONObject jsonResponse = new JSONObject(str);
-//                        int numel = 3;
-//                        for(int i=0;i<numel;i++) {
-//                            JSONObject jsonObject = jsonResponse.getJSONObject(Integer.toString(i+1));
-//                            user_id = jsonObject.getString("user_id");
-//                            name = jsonObject.getString("name");
-//                            String dist = jsonObject.getString("distance");
-//                            msg = msg + user_id + ":" + name + ":" + dist + ", ";
-//                            if(i==0) {
-//                                firstName = name;
-//                                firstUserid = user_id;
-//                            }
-//                        }
-//
-//                    } catch (JSONException e) {
-//                        e.printStackTrace();
-////                        showDebug("JSON Exception: " + e.toString());
-//                        // Exception here is just to catch Json number because we depend on this exception
-//                        // so dont set flag processing
-//                    } finally {
-//                        if(firstUserid.isEmpty()) {
-//                            if(emptyEncoding)
-//                                showDebug("Database encoding empty in server");
-//                            else
-//                                showDebug("No Match");
-//                            hideScanAnim();
-//                        } else {
-//                            showDebug(msg);
-//                        }
-//                        long stop = SystemClock.uptimeMillis();
-//                        showDebug("Timecost: " + (stop-start));
-//                        if((mDebug && !mPostAttendanceDuringDebug) || mNoPostAttendance) {
-//                            // debug is on and no need post attendance then quit
-//                            showDebug("DEBUG ON and POST ATTENDANCE OFF. No posting attendance to server.");
-//                            hideScanAnim();
-//                            hideProgressSpinKit();
-//                            hideTextProgress();
-//                            if(firstUserid.isEmpty()) {
-//                                if(emptyEncoding) {
-//                                    displayToastError(null, getString(R.string.s_no_record_db));
-//                                } else {
-//                                    displayToastError(null, getString(R.string.s_unknown_face));
-//                                    speakFeedback(getString(R.string.s_unknown_face));
-//                                }
-//                                delayedFinishProcessFlag();
-//
-//                            } else {
-//                                displayBottomMessageSuccess(getString(R.string.s_hello) + " " + firstName + CARRIAGE_RETURN + getString(R.string.s_nik) + " " + firstUserid);
-//                                speakFeedback(getString(R.string.s_hello) + " " + firstName);
-//                            }
-//                            return;
-//                        }
-//                        if(!firstUserid.isEmpty()) {
-//                            mUsernamePostAttendance = firstName;
-//                            mUserIdPostAttendance = firstUserid;
-//                            if (mAutoMode) {
-//                                autoModeOnline(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig);
-//                            } else {
-//                                mBitmapBig2 = mBitmapBig;
-//                                manualMode(firstUserid, firstName, /*croppedBitmap*/ mBitmapBig, true);
-//                            }
-//                        } else {
-//                            /**
-//                            No face match. Quit.
-//                             */
-//                            if(emptyEncoding) {
-//                                showDebug("No record on DB");
-//                                displayToastError(null, getString(R.string.s_no_record_db));
-//                                delayedFinishProcessFlag();
-//                            } else {
-////                                displayToastError(null, getString(R.string.s_unknown));
-//                                speakFeedback(getString(R.string.s_unknown_face));
-//                                showDebug("No face match");
-//                                displayBottomMessageUnknown();
-//                            }
-//                            hideProgressSpinKit();
-//                            hideTextProgress();
-//                            hideScanAnim();
-//                            return;
-//                        }
-//                    }
-//                } else {
-//                    // error on getting prediction, URL = URL_GET_PREDICTION
-//                    // success but not return 200, nothing we have here, repeat the process
-//                    showDebug("Prediction success but response not 200, should not be happened");
-//                    mIsProcessing = false;
-////                    startAnim = false;
-//                    hideProgressSpinKit();
-//                    hideTextProgress();
-//                    hideScanAnim();
-//                }
+
             }
 
             @Override
@@ -2345,111 +2246,111 @@ public class MainActivity extends AppCompatActivity { // implements FaceSubscrib
 
     }
 
-    private void autoModeOnline(final String userId, final String name, final Bitmap croppedBitmap) {
-        // AUTOMODE
-        /**
-         * This is the important feature of FaceSecure: to decide automatically whether
-         * this user is clock in or clock out. Decision (IN.OUT) is based on last attendance data.
-         * If last attendance data is IN then this is OUT, and vice versa
-         */
-        showDebug("Entering Online AutoMode");
-        showTextProgress(getString(R.string.s_get_last_att));
-        showDebug("Getting last attendance data from server of this user....");
-        /**
-         * GET LAST ATTENDANCE
-         */
-        String url = URL_HTTP + oIpAndPort + URL_GET_LAST_ATTENDANCE;
-        AsyncHttpClient client = new AsyncHttpClient();
-        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
-        client.setResponseTimeout(RESPONSE_TIMEOUT);
-        client.setConnectTimeout(CONNECT_TIMEOUT);
-        RequestParams rparams = new RequestParams();
-        rparams.add("user_id", userId);
-        showDebug(url);
-        client.get(url, rparams, new AsyncHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
-                if (statusCode == 200) {
-                    showDebug("Response valid 200");
-                    String response = new String(responseBody);
-                    if (response.contains("NA")) {
-                        // so this user is first time doing attendance
-                        postAttendanceOnline(userId, name, STRING_CLOCK_IN, croppedBitmap);
-                    } else {
-                        JSONObject jo = null;
-                        try {
-                            jo = new JSONObject(response);
-                            String status = jo.getString("status");
-                            String name = jo.getString("name");
-                            String strDateAttendance = jo.getString("created_at"); //sep[0].trim();
-                            String strTimeAttendance = jo.getString("created_on"); //sep[1].trim();
-                            String strAttDateTime = strDateAttendance + " " + strTimeAttendance;
-//                            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
-                            DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
-                            Date lastAttDateTime = dateFormat.parse(strAttDateTime);
-                            Long lastAt_millis = lastAttDateTime.getTime();
-                            Date dateNow = Calendar.getInstance().getTime(); // get now time
-                            Long nowTime_millis = dateNow.getTime();
-                            // convert minutes to millis for AutoTimeout
-                            Long mAutoTimeout_inMillis = Long.valueOf((mAutoTimeoutHours * 60 * 60 * 1000) + (mAutoTimeoutMinutes * 60 * 1000));
-                            if ((nowTime_millis - lastAt_millis) < mAutoTimeout_inMillis) {
-                                // eh, lo mau clockin/out lagi tong, baru bentaran lo
-                                String msg = "";
-                                if(mAutoTimeoutHours==0) {
-                                    msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
-                                            + " " + mAutoTimeoutMinutes
-                                            + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
-                                            + strDateAttendance + " " + strTimeAttendance;
-                                } else {
-                                    if(mAutoTimeoutMinutes==0) {
-                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
-                                                + " " + mAutoTimeoutHours + " "
-                                                + getString(R.string.s_hour) + "." + getString(R.string.s_last_att_on)
-                                                + strDateAttendance + " " + strTimeAttendance;
-                                    } else {
-                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
-                                                + " " + mAutoTimeoutMinutes
-                                                + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
-                                                + strDateAttendance + " " + strTimeAttendance;
-                                    }
-                                }
-
-//                                msg = msg + " WIB";
-                                displayBottomMessageWarning(msg);
-                                hideProgressSpinKit();
-                                hideScanAnim();
-                                speakNoProcess();
-
-                            } else {
-                                // more than AutoTimeout
-                                if (status.equalsIgnoreCase(STRING_CLOCK_IN)) {
-                                    postAttendanceOnline(userId, name, STRING_CLOCK_OUT, croppedBitmap);
-                                } else {
-                                    postAttendanceOnline(userId, name, STRING_CLOCK_IN, croppedBitmap);
-                                }
-                            }
-                        } catch (JSONException | ParseException e) {
-                            e.printStackTrace();
-                            showDebug(e.toString());
-                            mIsProcessing = false;
-//                            startAnim = false;
-                            hideProgressSpinKit();
-                            hideScanAnim();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
-                showDebug(error.toString());
-                displayBottomMessageError(error, "Internal Error");
-//                mIsProcessing = false;
-                hideProgressSpinKit();
-                hideScanAnim();
-            }
-        });
-    }
+//    private void autoModeOnline(final String userId, final String name, final Bitmap croppedBitmap) {
+//        // AUTOMODE
+//        /**
+//         * This is the important feature of FaceSecure: to decide automatically whether
+//         * this user is clock in or clock out. Decision (IN.OUT) is based on last attendance data.
+//         * If last attendance data is IN then this is OUT, and vice versa
+//         */
+//        showDebug("Entering Online AutoMode");
+//        showTextProgress(getString(R.string.s_get_last_att));
+//        showDebug("Getting last attendance data from server of this user....");
+//        /**
+//         * GET LAST ATTENDANCE
+//         */
+//        String url = URL_HTTP + oIpAndPort + URL_GET_LAST_ATTENDANCE;
+//        AsyncHttpClient client = new AsyncHttpClient();
+//        client.setMaxRetriesAndTimeout(MAX_RETRIES, MAX_RETRIES_TIMEOUT);
+//        client.setResponseTimeout(RESPONSE_TIMEOUT);
+//        client.setConnectTimeout(CONNECT_TIMEOUT);
+//        RequestParams rparams = new RequestParams();
+//        rparams.add("user_id", userId);
+//        showDebug(url);
+//        client.get(url, rparams, new AsyncHttpResponseHandler() {
+//            @Override
+//            public void onSuccess(int statusCode, Header[] headers, byte[] responseBody) {
+//                if (statusCode == 200) {
+//                    showDebug("Response valid 200");
+//                    String response = new String(responseBody);
+//                    if (response.contains("NA")) {
+//                        // so this user is first time doing attendance
+//                        postAttendanceOnline(userId, name, STRING_CLOCK_IN, croppedBitmap);
+//                    } else {
+//                        JSONObject jo = null;
+//                        try {
+//                            jo = new JSONObject(response);
+//                            String status = jo.getString("status");
+//                            String name = jo.getString("name");
+//                            String strDateAttendance = jo.getString("created_at"); //sep[0].trim();
+//                            String strTimeAttendance = jo.getString("created_on"); //sep[1].trim();
+//                            String strAttDateTime = strDateAttendance + " " + strTimeAttendance;
+////                            DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+//                            DateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+//                            Date lastAttDateTime = dateFormat.parse(strAttDateTime);
+//                            Long lastAt_millis = lastAttDateTime.getTime();
+//                            Date dateNow = Calendar.getInstance().getTime(); // get now time
+//                            Long nowTime_millis = dateNow.getTime();
+//                            // convert minutes to millis for AutoTimeout
+//                            Long mAutoTimeout_inMillis = Long.valueOf((mAutoTimeoutHours * 60 * 60 * 1000) + (mAutoTimeoutMinutes * 60 * 1000));
+//                            if ((nowTime_millis - lastAt_millis) < mAutoTimeout_inMillis) {
+//                                // eh, lo mau clockin/out lagi tong, baru bentaran lo
+//                                String msg = "";
+//                                if(mAutoTimeoutHours==0) {
+//                                    msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+//                                            + " " + mAutoTimeoutMinutes
+//                                            + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
+//                                            + strDateAttendance + " " + strTimeAttendance;
+//                                } else {
+//                                    if(mAutoTimeoutMinutes==0) {
+//                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+//                                                + " " + mAutoTimeoutHours + " "
+//                                                + getString(R.string.s_hour) + "." + getString(R.string.s_last_att_on)
+//                                                + strDateAttendance + " " + strTimeAttendance;
+//                                    } else {
+//                                        msg = getString(R.string.s_nik) + " " + userId + CARRIAGE_RETURN + getString(R.string.s_name) + " " + name + CARRIAGE_RETURN + getString(R.string.s_sorry_next_att)
+//                                                + " " + mAutoTimeoutMinutes
+//                                                + " " + getString(R.string.s_minute) + "." + getString(R.string.s_last_att_on)
+//                                                + strDateAttendance + " " + strTimeAttendance;
+//                                    }
+//                                }
+//
+////                                msg = msg + " WIB";
+//                                displayBottomMessageWarning(msg);
+//                                hideProgressSpinKit();
+//                                hideScanAnim();
+//                                speakNoProcess();
+//
+//                            } else {
+//                                // more than AutoTimeout
+//                                if (status.equalsIgnoreCase(STRING_CLOCK_IN)) {
+//                                    postAttendanceOnline(userId, name, STRING_CLOCK_OUT, croppedBitmap);
+//                                } else {
+//                                    postAttendanceOnline(userId, name, STRING_CLOCK_IN, croppedBitmap);
+//                                }
+//                            }
+//                        } catch (JSONException | ParseException e) {
+//                            e.printStackTrace();
+//                            showDebug(e.toString());
+//                            mIsProcessing = false;
+////                            startAnim = false;
+//                            hideProgressSpinKit();
+//                            hideScanAnim();
+//                        }
+//                    }
+//                }
+//            }
+//
+//            @Override
+//            public void onFailure(int statusCode, Header[] headers, byte[] responseBody, Throwable error) {
+//                showDebug(error.toString());
+//                displayBottomMessageError(error, "Internal Error");
+////                mIsProcessing = false;
+//                hideProgressSpinKit();
+//                hideScanAnim();
+//            }
+//        });
+//    }
 
     private String mLocation = "00";
     private void postAttendanceOnline(final String userId, String name, final String status, final Bitmap croppedBitmap) {
